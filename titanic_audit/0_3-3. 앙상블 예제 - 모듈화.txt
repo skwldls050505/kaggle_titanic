@@ -1,0 +1,196 @@
+
+### CELL 1 [markdown] execution=
+# Load Dataset
+
+### CELL 2 [code] execution=2
+import numpy as np 
+import pandas as pd
+
+import seaborn as sns 
+import matplotlib.pyplot as plt  
+
+### CELL 3 [code] execution=3
+df = sns.load_dataset("titanic")
+df.shape 
+OUTPUT:
+(891, 15)
+
+### CELL 4 [code] execution=4
+df.columns 
+OUTPUT:
+Index(['survived', 'pclass', 'sex', 'age', 'sibsp', 'parch', 'fare',
+       'embarked', 'class', 'who', 'adult_male', 'deck', 'embark_town',
+       'alive', 'alone'],
+      dtype='str')
+
+### CELL 5 [code] execution=5
+# 필요없는 컬럼 제거
+df.drop(
+    ['class', 'embark_town', 'alive'], axis=1, inplace=True
+)
+
+df.shape 
+OUTPUT:
+(891, 12)
+
+### CELL 6 [markdown] execution=
+## Target
+
+### CELL 7 [code] execution=6
+# 각 class간의 비율 확인 
+df['survived'].value_counts() / df.shape[0]
+OUTPUT:
+survived
+0    0.616162
+1    0.383838
+Name: count, dtype: float64
+
+### CELL 8 [markdown] execution=
+## 평가 & 학습 데이터셋 
+
+### CELL 9 [code] execution=7
+from common.utils import train_test_split_by_target
+
+train, test = train_test_split_by_target(df)
+
+train.shape, test.shape 
+OUTPUT:
+((668, 12), (223, 12))
+
+### CELL 10 [markdown] execution=
+# EDA
+
+### CELL 11 [code] execution=8
+train.info()
+OUTPUT:
+<class 'pandas.DataFrame'>
+Index: 668 entries, 486 to 821
+Data columns (total 12 columns):
+ #   Column      Non-Null Count  Dtype   
+---  ------      --------------  -----   
+ 0   survived    668 non-null    int64   
+ 1   pclass      668 non-null    int64   
+ 2   sex         668 non-null    str     
+ 3   age         537 non-null    float64 
+ 4   sibsp       668 non-null    int64   
+ 5   parch       668 non-null    int64   
+ 6   fare        668 non-null    float64 
+ 7   embarked    666 non-null    str     
+ 8   who         668 non-null    str     
+ 9   adult_male  668 non-null    bool    
+ 10  deck        145 non-null    category
+ 11  alone       668 non-null    bool    
+dtypes: bool(2), category(1), float64(2), int64(4), str(3)
+memory usage: 54.5 KB
+
+
+### CELL 12 [markdown] execution=
+# Data Preprocessing
+
+### CELL 13 [markdown] execution=
+## data cleaning
+
+### CELL 14 [code] execution=9
+# row 중복 제거 
+print(f"before: {train.shape}")
+
+# 평가는 학습을 하는 데이터가 아니기 때문에 row 중복 제거 제외
+train.drop_duplicates(inplace=True)
+print(f"after: {train.shape}")
+OUTPUT:
+before: (668, 12)
+after: (604, 12)
+
+
+### CELL 15 [code] execution=10
+# 결측치 확인 및 제거 
+null_tr = train.isnull().sum()
+
+(null_tr[null_tr > 0] / train.shape[0]).sort_values(ascending=False)
+OUTPUT:
+deck        0.759934
+age         0.142384
+embarked    0.003311
+dtype: float64
+
+### CELL 16 [code] execution=11
+print(f"before: {train.isnull().sum().sum()} / {test.isnull().sum().sum()}")
+
+for tmp in [train, test]:
+    null_tmp = tmp.isnull().sum()
+    null_cols = null_tmp[null_tmp > 0].index
+
+    for col in null_cols:
+        try:
+            tmp[col] = tmp[col].fillna(train[col].mean())
+
+        except:
+            tmp[col] = tmp[col].fillna(train[col].mode().values[0])
+
+print(f"after: {train.isnull().sum().sum()} / {test.isnull().sum().sum()}")
+OUTPUT:
+before: 547 / 211
+after: 0 / 0
+
+
+### CELL 17 [markdown] execution=
+# Modeling
+
+### CELL 18 [code] execution=12
+from common.modeling import Modeling
+
+### CELL 19 [markdown] execution=
+## Check Dataset before Modeling
+
+### CELL 20 [code] execution=13
+modeling = Modeling(
+    x_tr=train.drop(['survived'], axis=1),
+    y_tr=train['survived']
+)
+
+### CELL 21 [code] execution=14
+modeling.fit_evaluation(
+    x_te = test.drop(['survived'], axis=1),
+    y_te = test['survived']
+)
+
+### CELL 22 [code] execution=15
+modeling.get_best_model()
+OUTPUT:
+{'model_name': 'CatBoostClassifier',
+ 'hpo': {'verbose': 0,
+  'cat_features': ['pclass',
+   'sex',
+   'embarked',
+   'who',
+   'adult_male',
+   'deck',
+   'alone']},
+ 'train_score': 0.8386643711489671,
+ 'test_score': 0.787599728399253,
+ 'score_type': 'auc'}
+
+### CELL 23 [markdown] execution=
+# Evaluation
+
+### CELL 24 [code] execution=18
+print(
+    f'훈련용 평가지표: {modeling.get_best_model()['train_score']} / 테스트용 평가지표: {modeling.get_best_model()['test_score']}'
+)
+OUTPUT:
+훈련용 평가지표: 0.8386643711489671 / 테스트용 평가지표: 0.787599728399253
+
+
+### CELL 25 [code] execution=19
+from common.evaluation_plots import show_norm_conf_mx
+
+pred = modeling.predict_by_best_model(test.drop(['survived'], axis=1))
+
+show_norm_conf_mx(y=test['survived'], pred=pred)
+
+### CELL 26 [code] execution=20
+from common.modeling import BoostModelType
+
+BoostModelType.show_plot_importance(modeling.get_best_model()['model'])
+
+### CELL 27 [code] execution=

@@ -1,0 +1,297 @@
+
+### CELL 1 [markdown] execution=
+# Load Dataset
+
+### CELL 2 [code] execution=1
+import numpy as np 
+import pandas as pd
+
+import seaborn as sns 
+import matplotlib.pyplot as plt  
+
+### CELL 3 [code] execution=2
+import easydict 
+
+args = easydict.EasyDict()
+
+args.train_file = "./data/train.csv"
+args.test_file = "./data/test.csv"
+args.submission_file = "./data/submission.csv"
+
+### CELL 4 [code] execution=3
+train = pd.read_csv(args.train_file)
+train.shape # (row, columns=features+target)
+OUTPUT:
+(916, 12)
+
+### CELL 5 [code] execution=4
+test = pd.read_csv(args.test_file)
+test.shape # (row, columns=features)
+OUTPUT:
+(393, 11)
+
+### CELL 6 [code] execution=5
+submission = pd.read_csv(args.submission_file)
+submission.shape # (row, columns=ID+target)
+OUTPUT:
+(393, 2)
+
+### CELL 7 [markdown] execution=
+## Target
+
+### CELL 8 [code] execution=6
+# 각 class간의 비율 확인 
+train['survived'].value_counts() / train.shape[0]
+OUTPUT:
+survived
+0    0.622271
+1    0.377729
+Name: count, dtype: float64
+
+### CELL 9 [markdown] execution=
+# EDA
+
+### CELL 10 [code] execution=7
+train.info()
+OUTPUT:
+<class 'pandas.DataFrame'>
+RangeIndex: 916 entries, 0 to 915
+Data columns (total 12 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   passengerid  916 non-null    int64  
+ 1   survived     916 non-null    int64  
+ 2   pclass       916 non-null    int64  
+ 3   name         916 non-null    str    
+ 4   gender       916 non-null    str    
+ 5   age          736 non-null    float64
+ 6   sibsp        916 non-null    int64  
+ 7   parch        916 non-null    int64  
+ 8   ticket       916 non-null    str    
+ 9   fare         916 non-null    float64
+ 10  cabin        198 non-null    str    
+ 11  embarked     915 non-null    str    
+dtypes: float64(2), int64(5), str(5)
+memory usage: 86.0 KB
+
+
+### CELL 11 [markdown] execution=
+# Data Preprocessing
+
+### CELL 12 [markdown] execution=
+## data cleaning
+
+### CELL 13 [code] execution=8
+# row 중복 제거 
+print(f"before: {train.shape}")
+
+# 평가는 학습을 하는 데이터가 아니기 때문에 row 중복 제거 제외
+train.drop_duplicates(inplace=True)
+print(f"after: {train.shape}")
+OUTPUT:
+before: (916, 12)
+after: (916, 12)
+
+
+### CELL 14 [code] execution=9
+# 결측치 확인 및 제거 
+null_tr = train.isnull().sum()
+
+(null_tr[null_tr > 0] / train.shape[0]).sort_values(ascending=False)
+OUTPUT:
+cabin       0.783843
+age         0.196507
+embarked    0.001092
+dtype: float64
+
+### CELL 15 [code] execution=10
+print(f"before: {train.isnull().sum().sum()} / {test.isnull().sum().sum()}")
+
+for tmp in [train, test]:
+    null_tmp = tmp.isnull().sum()
+    null_cols = null_tmp[null_tmp > 0].index
+
+    for col in null_cols:
+        try:
+            tmp[col] = tmp[col].fillna(train[col].mean())
+
+        except:
+            tmp[col] = tmp[col].fillna(train[col].mode().values[0])
+
+print(f"after: {train.isnull().sum().sum()} / {test.isnull().sum().sum()}")
+OUTPUT:
+before: 899 / 381
+after: 0 / 0
+
+
+### CELL 16 [code] execution=11
+train.columns 
+OUTPUT:
+Index(['passengerid', 'survived', 'pclass', 'name', 'gender', 'age', 'sibsp',
+       'parch', 'ticket', 'fare', 'cabin', 'embarked'],
+      dtype='str')
+
+### CELL 17 [code] execution=12
+train.set_index(['passengerid'], inplace=True)
+test.set_index(['passengerid'], inplace=True)
+train.head()
+OUTPUT:
+             survived  pclass  \
+passengerid                     
+0                   0       2   
+1                   0       3   
+2                   1       1   
+3                   1       3   
+4                   0       2   
+
+                                                          name  gender  \
+passengerid                                                              
+0                               Wheeler, Mr. Edwin Frederick""    male   
+1                                           Henry, Miss. Delia  female   
+2            Hays, Mrs. Charles Melville (Clara Jennings Gr...  female   
+3                 Andersson, Mr. August Edvard ("Wennerstrom")    male   
+4                                            Hold, Mr. Stephen    male   
+
+                  age  sibsp  parch         ticket     fare            cabin  \
+passengerid                                                                    
+0            29.69837      0      0  SC/PARIS 2159  12.8750  B57 B59 B63 B66   
+1            29.69837      0      0         382649   7.7500  B57 B59 B63 B66   
+2            52.00000      1      1          12749  93.5000              B69   
+3            27.00000      0      0         350043   7.7958  B57 B59 B63 B66   
+4            44.00000      1      0          26707  26.0000  B57 B59 B63 B66   
+
+            embarked  
+passengerid           
+0                  S  
+1                  Q  
+2                  S  
+3                  S  
+4                  S  
+
+### CELL 18 [code] execution=13
+train.columns 
+OUTPUT:
+Index(['survived', 'pclass', 'name', 'gender', 'age', 'sibsp', 'parch',
+       'ticket', 'fare', 'cabin', 'embarked'],
+      dtype='str')
+
+### CELL 19 [code] execution=14
+train.drop(['name', 'ticket', 'cabin', 'embarked'], axis=1, inplace=True)
+test.drop(['name', 'ticket', 'cabin', 'embarked'], axis=1, inplace=True)
+
+### CELL 20 [code] execution=15
+cat_cols = [
+    'pclass', 'gender'
+]
+
+### CELL 21 [markdown] execution=
+# Modeling
+
+### CELL 22 [code] execution=16
+from common.modeling import Modeling
+
+### CELL 23 [markdown] execution=
+## Check Dataset before Modeling
+
+### CELL 24 [code] execution=17
+modeling = Modeling(
+    x_tr=train.drop(['survived'], axis=1),
+    y_tr=train['survived'],
+    cat_cols=cat_cols
+)
+
+### CELL 25 [code] execution=18
+modeling.fit_evaluation(
+    x_te = train.drop(['survived'], axis=1),
+    y_te = train['survived']
+)
+OUTPUT:
+training..:   0%|          | 0/3 [00:00<?, ?it/s]
+
+### CELL 26 [code] execution=19
+modeling.get_best_model()
+OUTPUT:
+{'model': XGBClassifier(base_score=None, booster=None, callbacks=None,
+               colsample_bylevel=None, colsample_bynode=None,
+               colsample_bytree=None, device=None, early_stopping_rounds=None,
+               enable_categorical=True, eval_metric=None, feature_types=None,
+               feature_weights=None, gamma=None, grow_policy=None,
+               importance_type=None, interaction_constraints=None,
+               learning_rate=None, max_bin=None, max_cat_threshold=None,
+               max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+               max_leaves=None, min_child_weight=None, missing=nan,
+               monotone_constraints=None, multi_strategy=None, n_estimators=None,
+               n_jobs=None, num_parallel_tree=None, ...),
+ 'model_name': 'XGBClassifier',
+ 'hpo': {'tree_method': 'hist', 'enable_categorical': True},
+ 'train_score': 0.9536558158401784,
+ 'test_score': 0.9536558158401784,
+ 'score_type': 'get_auc_score'}
+
+### CELL 27 [markdown] execution=
+# Evaluation
+
+### CELL 28 [code] execution=20
+print(
+    f'훈련용 평가지표: {modeling.get_best_model()['train_score']} / 테스트용 평가지표: {modeling.get_best_model()['test_score']}'
+)
+OUTPUT:
+훈련용 평가지표: 0.9536558158401784 / 테스트용 평가지표: 0.9536558158401784
+
+
+### CELL 29 [code] execution=21
+bool_cols = train.select_dtypes(include=["bool", "boolean"]).columns
+train[bool_cols] = train[bool_cols].astype("int8")
+
+train[cat_cols] = train[cat_cols].astype('category')
+
+### CELL 30 [code] execution=22
+from common.evaluation_plots import show_norm_conf_mx
+
+pred = modeling.predict_by_best_model(train.drop(['survived'], axis=1))
+
+show_norm_conf_mx(y=train['survived'], pred=pred)
+OUTPUT:
+<Figure size 700x500 with 2 Axes>
+
+### CELL 31 [code] execution=23
+from common.modeling import BoostModelType
+
+BoostModelType.show_plot_importance(modeling.get_best_model()['model'])
+OUTPUT:
+<Figure size 640x480 with 1 Axes>
+
+### CELL 32 [markdown] execution=
+# Submission
+
+### CELL 33 [code] execution=24
+bool_cols = test.select_dtypes(include=["bool", "boolean"]).columns
+test[bool_cols] = test[bool_cols].astype("int8")
+
+test[cat_cols] = test[cat_cols].astype('category')
+
+
+### CELL 34 [code] execution=25
+pred = modeling.predict_by_best_model(test)
+
+### CELL 35 [code] execution=27
+submission.shape , len(pred)
+OUTPUT:
+((393, 2), 393)
+
+### CELL 36 [code] execution=30
+submission['survived'] = pred
+
+submission.head()
+OUTPUT:
+   passengerid  survived
+0          916         1
+1          917         1
+2          918         1
+3          919         0
+4          920         1
+
+### CELL 37 [code] execution=33
+submission.to_csv("./submission/base_model_0909_01_(95.36).csv", index=False)
+
+### CELL 38 [code] execution=

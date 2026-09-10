@@ -1,0 +1,445 @@
+
+### CELL 1 [markdown] execution=
+# Titanic 7: FarePerPerson
+이번 가설: 운임을 학습 티켓 공유 수로 나눈 비율은 기존 운임과 다른 여행 조건을 표현할 수 있다. 실제 개인당 운임이라고 단정하지 않는다.
+이전까지 채택된 추가 피처: ['SexPclass'].
+이번 변경: **FarePerPerson 하나 추가**, 다른 모델·하이퍼파라미터 변경 없음. HasCabin/AgeMissing 제외 유지.
+
+채택 규칙(평가 전 고정): 이전 Best보다 holdout AUC 상승 → 동일 5-fold 비교 → CV 평균 상승 및 Gap 증가 0.01 이내이면 채택. Gap 0.01은 운영 기준이며 통계적 유의성 기준이 아니다.
+CV도 이 데이터로 후보를 고르는 보조 검증이므로 반복 선택의 낙관성이 남는다. 여러 CV fold 결과로 새 threshold를 탐색하지 않는다.
+CSV는 해당 버전에서 **실제로 실험한 후보 피처 집합**의 예측을 보존한다. 탈락 피처는 다음 버전의 입력에 누적하지 않는다. 최종 채택 Best와 실험 CSV를 구분한다.
+
+### CELL 2 [markdown] execution=
+# 1. 데이터 불러오기
+
+### CELL 3 [code] execution=1
+from pathlib import Path
+import numpy as np
+import pandas as pd
+from IPython.display import display
+from common.utils import train_test_split_by_target
+from common.feature_experiments import FeaturePreprocessor, fit_cat, scores, cv_compare, baseline_parameters
+
+train = pd.read_csv('csv/train.csv')
+test = pd.read_csv('csv/test.csv')
+submission = pd.read_csv('csv/submission.csv')
+previous_features = ['SexPclass']
+new_feature = 'FarePerPerson'
+candidate_features = previous_features + [new_feature]
+previous_cv = {'mean': 0.9046761832116523, 'std': 0.01613237786295489}
+print(train.shape, test.shape)
+display(train.head())
+display(test.head())
+OUTPUT:
+   passengerid  survived  pclass  ...     fare cabin  embarked
+0            0         0       2  ...  12.8750   NaN         S
+1            1         0       3  ...   7.7500   NaN         Q
+2            2         1       1  ...  93.5000   B69         S
+3            3         1       3  ...   7.7958   NaN         S
+4            4         0       2  ...  26.0000   NaN         S
+
+[5 rows x 12 columns]
+OUTPUT:
+   passengerid  pclass  ... cabin embarked
+0          916       3  ...   NaN        Q
+1          917       2  ...   NaN        S
+2          918       3  ...   NaN        Q
+3          919       3  ...   NaN        S
+4          920       1  ...   NaN        S
+
+[5 rows x 11 columns]
+OUTPUT:
+(916, 12) (393, 11)
+
+
+### CELL 4 [markdown] execution=
+# 2. 데이터 메타 정보 확인
+
+### CELL 5 [code] execution=2
+train.info()
+print(train.isna().sum())
+print(train.nunique())
+test.info()
+print(test.isna().sum())
+print('train에만:', set(train.columns)-set(test.columns))
+OUTPUT:
+<class 'pandas.DataFrame'>
+RangeIndex: 916 entries, 0 to 915
+Data columns (total 12 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   passengerid  916 non-null    int64  
+ 1   survived     916 non-null    int64  
+ 2   pclass       916 non-null    int64  
+ 3   name         916 non-null    str    
+ 4   gender       916 non-null    str    
+ 5   age          736 non-null    float64
+ 6   sibsp        916 non-null    int64  
+ 7   parch        916 non-null    int64  
+ 8   ticket       916 non-null    str    
+ 9   fare         916 non-null    float64
+ 10  cabin        198 non-null    str    
+ 11  embarked     915 non-null    str    
+dtypes: float64(2), int64(5), str(5)
+memory usage: 86.0 KB
+passengerid      0
+survived         0
+pclass           0
+name             0
+gender           0
+age            180
+sibsp            0
+parch            0
+ticket           0
+fare             0
+cabin          718
+embarked         1
+dtype: int64
+passengerid    916
+survived         2
+pclass           3
+name           915
+gender           2
+age             92
+sibsp            7
+parch            8
+ticket         703
+fare           251
+cabin          146
+embarked         3
+dtype: int64
+<class 'pandas.DataFrame'>
+RangeIndex: 393 entries, 0 to 392
+Data columns (total 11 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   passengerid  393 non-null    int64  
+ 1   pclass       393 non-null    int64  
+ 2   name         393 non-null    str    
+ 3   gender       393 non-null    str    
+ 4   age          310 non-null    float64
+ 5   sibsp        393 non-null    int64  
+ 6   parch        393 non-null    int64  
+ 7   ticket       393 non-null    str    
+ 8   fare         392 non-null    float64
+ 9   cabin        97 non-null     str    
+ 10  embarked     392 non-null    str    
+dtypes: float64(2), int64(4), str(5)
+memory usage: 33.9 KB
+passengerid      0
+pclass           0
+name             0
+gender           0
+age             83
+sibsp            0
+parch            0
+ticket           0
+fare             1
+cabin          296
+embarked         1
+dtype: int64
+train에만: {'survived'}
+
+
+### CELL 6 [markdown] execution=
+# 3. Target 정의
+
+### CELL 7 [code] execution=3
+assert set(train.columns)-set(test.columns) == {'survived'}
+assert set(test.columns)-set(train.columns) == set()
+target_col = 'survived'
+id_col = 'passengerid'
+X = train.drop(columns=[target_col, id_col])
+y = train[target_col]
+X_test_raw = test.drop(columns=id_col)
+assert X.columns.equals(X_test_raw.columns)
+assert train[id_col].is_unique and test[id_col].is_unique
+assert set(train[id_col]).isdisjoint(test[id_col])
+
+### CELL 8 [markdown] execution=
+# 4. Target 분석
+Baseline과 같은 seed 42, stratify, validation 25%를 유지합니다.
+
+### CELL 9 [code] execution=4
+print(y.value_counts(normalize=True))
+train_part, valid_part = train_test_split_by_target(train, target_name=target_col)
+X_tr_raw = train_part.drop(columns=[target_col, id_col])
+y_tr = train_part[target_col]
+X_valid_raw = valid_part.drop(columns=[target_col, id_col])
+y_valid = valid_part[target_col]
+assert len(train_part)==687 and len(valid_part)==229
+print('학습/검증:', X_tr_raw.shape, X_valid_raw.shape)
+OUTPUT:
+survived
+0    0.622271
+1    0.377729
+Name: proportion, dtype: float64
+학습/검증: (687, 10) (229, 10)
+
+
+### CELL 10 [markdown] execution=
+# 5. EDA
+학습 부분만 사용해 후보를 임시 계산하고 target과의 관계를 확인합니다. 모델 입력에 채택하기 전의 점검입니다.
+생성 방법 / 사용 원본: 학습 기준 치환 fare / max(학습 ticket count, 1). TicketGroupSize가 채택되지 않았다면 계산에만 사용하고 입력 피처로 추가하지 않는다.
+validation/test는 빈도·구간·중앙값 결정에 사용하지 않습니다.
+
+### CELL 11 [code] execution=5
+eda_prep = FeaturePreprocessor(candidate_features).fit_missing(X_tr_raw)
+eda_frame = eda_prep.feature_frame(X_tr_raw, eda_prep.transform_missing(X_tr_raw))
+eda_frame[target_col] = y_tr
+groups = pd.qcut(eda_frame[new_feature], 4, duplicates='drop')
+display(eda_frame.groupby(groups,observed=True)[target_col].agg(['count','mean']))
+print('EDA 표본 수:', len(eda_frame))
+OUTPUT:
+                   count      mean
+FarePerPerson                     
+(-0.001, 7.788]      172  0.290698
+(7.788, 10.5]        184  0.282609
+(10.5, 25.927]       159  0.377358
+(25.927, 512.329]    172  0.569767
+OUTPUT:
+EDA 표본 수: 687
+
+
+### CELL 12 [markdown] execution=
+해석 기준: fare, pclass, 티켓 수와의 상관을 확인한다. 표본에서 관측된 티켓 수로 나누므로 실제 경제력/개인 운임과 동일하다고 가정하지 않는다. 숫자형의 Pearson 상관만으로 삭제하지 않습니다. 카테고리 표의 count가 작을수록 평균 생존율을 조심해서 해석합니다.
+
+### CELL 13 [markdown] execution=
+# 6. 데이터 전처리
+## 6-1. 결측치
+Baseline의 나이 그룹 중앙값, 전체 중앙값 fallback, 수치형 중앙값/범주형 최빈값과 cabin 원문 삭제를 재사용합니다. 원본 X는 보존하여 이름/티켓/객실 파생변수에 사용합니다.
+
+### CELL 14 [code] execution=6
+prep = FeaturePreprocessor(candidate_features).fit_missing(X_tr_raw)
+X_tr_clean = prep.transform_missing(X_tr_raw)
+X_valid_clean = prep.transform_missing(X_valid_raw)
+assert not X_tr_clean.isna().any().any()
+assert not X_valid_clean.isna().any().any()
+
+### CELL 15 [markdown] execution=
+## 6-2. Feature 생성
+Baseline FamilySize/IsAlone + 이전 채택 피처 + 이번 FarePerPerson만 생성합니다. 실제 생성 함수는 새 common/feature_experiments.py에 있고 기존 common은 그대로입니다.
+
+### CELL 16 [code] execution=7
+X_tr_features = prep.feature_frame(X_tr_raw, X_tr_clean)
+X_valid_features = prep.feature_frame(X_valid_raw, X_valid_clean)
+print('추가 피처:', candidate_features)
+print('인코딩 전:', X_tr_features.columns.tolist())
+display(X_tr_features.head())
+OUTPUT:
+     pclass  gender    age  sibsp  ...  FamilySize  IsAlone SexPclass  FarePerPerson
+595       3    male   0.83      0  ...           2        0    male_3         4.6750
+148       3    male  24.00      0  ...           1        1    male_3         8.0500
+347       3  female   9.00      1  ...           3        0  female_3         7.6229
+731       3  female  24.00      0  ...           3        0  female_3         8.3500
+457       2    male  44.00      0  ...           1        1    male_2        13.0000
+
+[5 rows x 11 columns]
+OUTPUT:
+추가 피처: ['SexPclass', 'FarePerPerson']
+인코딩 전: ['pclass', 'gender', 'age', 'sibsp', 'parch', 'fare', 'embarked', 'FamilySize', 'IsAlone', 'SexPclass', 'FarePerPerson']
+
+
+### CELL 17 [markdown] execution=
+## 6-3. 중복/Feature 관계 확인
+이름/티켓 원문은 baseline처럼 제외합니다. 파생 정보가 있으면 그 피처만 남습니다. Row 중복은 baseline처럼 검증만 하며 승객을 제거하지 않습니다.
+
+### CELL 18 [code] execution=8
+assert train.duplicated().sum()==0
+assert train.drop(columns=id_col).duplicated().sum()==0
+if pd.api.types.is_numeric_dtype(X_tr_features[new_feature]):
+    numeric = X_tr_features.select_dtypes(include='number')
+    display(numeric.corr()[new_feature].sort_values())
+else:
+    display(pd.crosstab(X_tr_features[new_feature], X_tr_raw['pclass']))
+    display(pd.crosstab(X_tr_features[new_feature], X_tr_raw['gender']))
+ticket_count = X_tr_raw['ticket'].map(prep.ticket_counts_).fillna(1)
+relation = X_tr_features[['fare','pclass','FarePerPerson']].copy()
+relation['TicketGroupSize'] = ticket_count
+display(relation.corr())
+OUTPUT:
+pclass          -0.544859
+IsAlone         -0.199852
+sibsp            0.032764
+FamilySize       0.062767
+parch            0.079884
+age              0.197405
+fare             0.856225
+FarePerPerson    1.000000
+Name: FarePerPerson, dtype: float64
+OUTPUT:
+                     fare    pclass  FarePerPerson  TicketGroupSize
+fare             1.000000 -0.557486       0.856225         0.303895
+pclass          -0.557486  1.000000      -0.544859         0.005837
+FarePerPerson    0.856225 -0.544859       1.000000        -0.001479
+TicketGroupSize  0.303895  0.005837      -0.001479         1.000000
+
+### CELL 19 [markdown] execution=
+fare, pclass, 티켓 수와의 상관을 확인한다. 표본에서 관측된 티켓 수로 나누므로 실제 경제력/개인 운임과 동일하다고 가정하지 않는다.
+
+### CELL 20 [markdown] execution=
+## 6-4. Encoding
+학습 부분에서만 OneHotEncoder를 fit하고 validation에는 transform만 합니다. 새로운 범주형도 같은 방식, 미관측 범주는 ignore입니다.
+
+### CELL 21 [code] execution=9
+prep.fit_encoding(X_tr_features)
+X_tr_model = prep.transform_encoding(X_tr_features)
+X_valid_model = prep.transform_encoding(X_valid_features)
+assert X_tr_model.columns.equals(X_valid_model.columns)
+assert X_tr_model.index.equals(y_tr.index)
+print(X_tr_model.shape, X_valid_model.shape)
+OUTPUT:
+(687, 19) (229, 19)
+
+
+### CELL 22 [markdown] execution=
+## 6-5. Scaling
+Baseline과 동일하게 적용하지 않습니다.
+
+### CELL 23 [code] execution=10
+assert np.isfinite(X_tr_model.to_numpy()).all()
+assert np.isfinite(X_valid_model.to_numpy()).all()
+
+### CELL 24 [markdown] execution=
+# 7. 모델 학습
+원본 baseline, 이전 Best, 후보를 동일한 모델로 학습합니다. 원본 baseline의 실제 파라미터 전체와 후보를 비교합니다. learning_rate 등의 자동 기본값도 같은 학습 크기에서 동일해야 합니다.
+
+### CELL 25 [code] execution=11
+reference_prep = FeaturePreprocessor()
+reference_X = reference_prep.fit_transform(X_tr_raw)
+reference_valid = reference_prep.transform(X_valid_raw)
+reference_model = fit_cat(reference_X, y_tr)
+reference_scores = scores(reference_model, reference_X, y_tr, reference_valid, y_valid)
+assert abs(reference_scores['validation_auc'] - 0.900065) < 0.000001
+previous_prep = FeaturePreprocessor(previous_features)
+previous_X = previous_prep.fit_transform(X_tr_raw)
+previous_valid = previous_prep.transform(X_valid_raw)
+previous_model = reference_model if not previous_features else fit_cat(previous_X, y_tr)
+previous_scores = scores(previous_model, previous_X, y_tr, previous_valid, y_valid)
+candidate_model = fit_cat(X_tr_model, y_tr)
+assert candidate_model.get_all_params() == reference_model.get_all_params()
+assert previous_model.get_all_params() == reference_model.get_all_params()
+print('명시적 설정:', baseline_parameters())
+print('실효 설정:', candidate_model.get_all_params())
+OUTPUT:
+명시적 설정: {'verbose': 0, 'random_state': 42, 'cat_features': [], 'allow_writing_files': False}
+실효 설정: {'nan_mode': 'Min', 'eval_metric': 'Logloss', 'iterations': 1000, 'sampling_frequency': 'PerTree', 'leaf_estimation_method': 'Newton', 'random_score_type': 'NormalWithModelSizeDecrease', 'grow_policy': 'SymmetricTree', 'penalties_coefficient': 1, 'boosting_type': 'Plain', 'model_shrink_mode': 'Constant', 'feature_border_type': 'GreedyLogSum', 'bayesian_matrix_reg': 0.10000000149011612, 'eval_fraction': 0, 'force_unit_auto_pair_weights': False, 'l2_leaf_reg': 3, 'random_strength': 1, 'rsm': 1, 'boost_from_average': False, 'model_size_reg': 0.5, 'pool_metainfo_options': {'tags': {}}, 'subsample': 0.800000011920929, 'use_best_model': False, 'class_names': [0, 1], 'random_seed': 42, 'depth': 6, 'posterior_sampling': False, 'border_count': 254, 'classes_count': 0, 'auto_class_weights': 'None', 'sparse_features_conflict_fraction': 0, 'leaf_estimation_backtracking': 'AnyImprovement', 'best_model_min_trees': 1, 'model_shrink_rate': 0, 'min_data_in_leaf': 1, 'loss_function': 'Logloss', 'learning_rate': 0.008775999769568443, 'score_function': 'Cosine', 'task_type': 'CPU', 'leaf_estimation_iterations': 10, 'bootstrap_type': 'MVS', 'max_leaves': 64}
+
+
+### CELL 26 [markdown] execution=
+# 8. Evaluation
+양성 클래스 확률로 AUC를 계산합니다. 이전 Best 대비 상승 후보만 5-fold를 수행합니다.
+
+### CELL 27 [code] execution=12
+candidate_scores = scores(candidate_model, X_tr_model, y_tr, X_valid_model, y_valid)
+holdout_delta = candidate_scores['validation_auc'] - previous_scores['validation_auc']
+original_delta = candidate_scores['validation_auc'] - reference_scores['validation_auc']
+display(pd.DataFrame({'Original baseline':reference_scores, 'Previous best':previous_scores, 'Candidate':candidate_scores}))
+print('이전 Best 대비:', holdout_delta, '최초 baseline 대비:', original_delta)
+candidate_cv = None
+cv_folds = None
+if holdout_delta > 0:
+    cv_folds, cv_table = cv_compare(X, y, previous_features, candidate_features)
+    display(cv_folds.pivot(index='fold', columns='model', values='auc'))
+    display(cv_table)
+    previous_cv = cv_table.loc['Previous best'].to_dict()
+    candidate_cv = cv_table.loc['Candidate'].to_dict()
+accepted = (holdout_delta > 0 and candidate_cv is not None
+            and candidate_cv['mean'] > previous_cv['mean']
+            and candidate_scores['gap'] <= previous_scores['gap'] + 0.01)
+best_features = candidate_features if accepted else previous_features
+best_scores = candidate_scores if accepted else previous_scores
+best_cv = candidate_cv if accepted else previous_cv
+print('채택:', accepted, '다음 버전의 Best:', best_features)
+OUTPUT:
+                Original baseline  Previous best  Candidate
+train_auc                0.963079       0.963047   0.965835
+validation_auc           0.900065       0.902911   0.902748
+gap                      0.063014       0.060136   0.063087
+OUTPUT:
+이전 Best 대비: -0.00016262806960487541 최초 baseline 대비: 0.0026833631484793896
+채택: False 다음 버전의 Best: ['SexPclass']
+
+
+### CELL 28 [markdown] execution=
+# 9. 전체 Train 재학습
+요청한 버전별 CSV는 채택 여부와 무관하게 이번에 실험한 후보 피처로 생성합니다. 다음 실험은 채택된 Best만 이어받습니다. 전체 train 학습도 같은 크기의 원본 baseline과 실효 파라미터를 대조합니다.
+
+### CELL 29 [code] execution=13
+full_reference_prep = FeaturePreprocessor()
+full_reference_X = full_reference_prep.fit_transform(X)
+full_reference_model = fit_cat(full_reference_X, y)
+final_prep = FeaturePreprocessor(candidate_features)
+X_full_model = final_prep.fit_transform(X)
+submission_model = fit_cat(X_full_model, y)
+assert submission_model.get_all_params() == full_reference_model.get_all_params()
+print('이 버전 CSV의 피처:', X_full_model.columns.tolist())
+print('최종 학습 실효 파라미터:', submission_model.get_all_params())
+OUTPUT:
+이 버전 CSV의 피처: ['pclass', 'age', 'sibsp', 'parch', 'fare', 'FamilySize', 'IsAlone', 'FarePerPerson', 'gender_female', 'gender_male', 'embarked_C', 'embarked_Q', 'embarked_S', 'SexPclass_female_1', 'SexPclass_female_2', 'SexPclass_female_3', 'SexPclass_male_1', 'SexPclass_male_2', 'SexPclass_male_3']
+최종 학습 실효 파라미터: {'nan_mode': 'Min', 'eval_metric': 'Logloss', 'iterations': 1000, 'sampling_frequency': 'PerTree', 'leaf_estimation_method': 'Newton', 'random_score_type': 'NormalWithModelSizeDecrease', 'grow_policy': 'SymmetricTree', 'penalties_coefficient': 1, 'boosting_type': 'Plain', 'model_shrink_mode': 'Constant', 'feature_border_type': 'GreedyLogSum', 'bayesian_matrix_reg': 0.10000000149011612, 'eval_fraction': 0, 'force_unit_auto_pair_weights': False, 'l2_leaf_reg': 3, 'random_strength': 1, 'rsm': 1, 'boost_from_average': False, 'model_size_reg': 0.5, 'pool_metainfo_options': {'tags': {}}, 'subsample': 0.800000011920929, 'use_best_model': False, 'class_names': [0, 1], 'random_seed': 42, 'depth': 6, 'posterior_sampling': False, 'border_count': 254, 'classes_count': 0, 'auto_class_weights': 'None', 'sparse_features_conflict_fraction': 0, 'leaf_estimation_backtracking': 'AnyImprovement', 'best_model_min_trees': 1, 'model_shrink_rate': 0, 'min_data_in_leaf': 1, 'loss_function': 'Logloss', 'learning_rate': 0.009922999888658524, 'score_function': 'Cosine', 'task_type': 'CPU', 'leaf_estimation_iterations': 10, 'bootstrap_type': 'MVS', 'max_leaves': 64}
+
+
+### CELL 30 [markdown] execution=
+# 10. Test 예측
+
+### CELL 31 [code] execution=14
+X_test_model = final_prep.transform(X_test_raw)
+assert X_test_model.columns.equals(X_full_model.columns)
+positive_index = list(submission_model.classes_).index(1)
+predictions = submission_model.predict_proba(X_test_model)[:, positive_index]
+assert np.isfinite(predictions).all()
+assert ((predictions>=0)&(predictions<=1)).all()
+
+### CELL 32 [markdown] execution=
+# 11. Submission 생성
+템플릿 예측 열만 교체하고 원래 ID/순서를 유지합니다. 기존 버전 덮어쓰기를 방지합니다.
+
+### CELL 33 [code] execution=15
+output_path = Path('submission/titanic_result_7.csv')
+assert not output_path.exists(), '기존 결과를 덮어쓰지 않습니다.'
+assert submission.columns.tolist()==[id_col,target_col]
+assert len(submission)==len(test)
+assert submission[id_col].is_unique and submission[id_col].notna().all()
+assert set(submission[id_col])==set(test[id_col])
+result = submission.copy(deep=True)
+by_id = pd.Series(predictions,index=test[id_col].to_numpy())
+result[target_col] = result[id_col].map(by_id)
+assert result[target_col].notna().all()
+result.to_csv(output_path,index=False)
+saved = pd.read_csv(output_path)
+assert saved.shape==submission.shape==(len(test),2)
+assert saved.columns.equals(submission.columns)
+pd.testing.assert_frame_equal(saved.drop(columns=target_col),submission.drop(columns=target_col))
+assert pd.api.types.is_float_dtype(saved[target_col])
+assert saved[target_col].notna().all() and saved[target_col].between(0,1).all()
+np.testing.assert_allclose(saved[target_col],by_id.loc[submission[id_col]],atol=1e-15,rtol=1e-12)
+print('검증 통과:', output_path, saved.shape)
+OUTPUT:
+검증 통과: submission\titanic_result_7.csv (393, 2)
+
+
+### CELL 34 [markdown] execution=
+## 실제 EDA 관측과 판단
+fare와 FarePerPerson 상관은 0.856, pclass와는 -0.545, TicketGroupSize와는 -0.001이다. 높은 운임과 공유 수가 섞인 비율이지만 원본 fare와 상당 부분 겹친다. 이번에는 TicketGroupSize가 탈락해 분모 계산에만 사용했으며 입력에는 별도로 추가하지 않았다.
+
+### CELL 35 [markdown] execution=
+# 12. 해당 버전 실험 결과
+
+가설: 운임을 학습 티켓 공유 수로 나눈 비율은 기존 운임과 다른 여행 조건을 표현할 수 있다. 실제 개인당 운임이라고 단정하지 않는다.
+
+| 항목 | 이전 Best | 이번 실험 |
+|---|---:|---:|
+| train_auc | 0.963047 | 0.965835 |
+| validation_auc | 0.902911 | 0.902748 |
+| gap | 0.060136 | 0.063087 |
+| CV mean | 0.904676 | 미실행 |
+| CV std | 0.016132 | 미실행 |
+
+**제외**: holdout 개선 없음. 이전 Best 대비 -0.000163, 최초 baseline 대비 +0.002683.
+
+다음 버전의 추가 피처: ['SexPclass'].
+이번 CSV 입력: ['SexPclass', 'FarePerPerson'].
+
+기존 피처와의 관계: fare, pclass, 티켓 수와의 상관을 확인한다. 표본에서 관측된 티켓 수로 나누므로 실제 경제력/개인 운임과 동일하다고 가정하지 않는다.
+개별 집단 비율은 EDA 표에 있으며 소표본/인과관계 해석에 주의합니다. CV 미실행은 0점이 아니라 holdout에서 우선 제외했음을 의미합니다.

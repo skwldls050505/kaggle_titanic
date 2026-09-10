@@ -1,0 +1,1003 @@
+{
+  "environment": {
+    "python": "3.12.13",
+    "pandas": "3.0.5",
+    "catboost": "1.2.10",
+    "sklearn": "1.9.0"
+  },
+  "data": {
+    "train": {
+      "equal_values": true,
+      "sha256_study": "f752a254eaf503f4cfd0dacd6854b4e9638d78d65ee9e9944b8db8895d991617",
+      "sha256_project": "f752a254eaf503f4cfd0dacd6854b4e9638d78d65ee9e9944b8db8895d991617"
+    },
+    "test": {
+      "equal_values": true,
+      "sha256_study": "9df3361de7838476cc9a9d216e09f58edbf6b1267dfd188d8a504b943671a070",
+      "sha256_project": "9df3361de7838476cc9a9d216e09f58edbf6b1267dfd188d8a504b943671a070"
+    },
+    "submission": {
+      "equal_values": true,
+      "sha256_study": "723ab89193140f3c5a901ca96a7fcbb9869bba674e385a1c7ff77cdbd029e697",
+      "sha256_project": "723ab89193140f3c5a901ca96a7fcbb9869bba674e385a1c7ff77cdbd029e697"
+    }
+  },
+  "csv": [
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\submission_result_1.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.013397498657791,
+      "max": 0.9966272102174952,
+      "unique": 350,
+      "hard_labels": false,
+      "sha256": "63accf77b10d71f2966e9e9af63a506c88c7e9c85f0b738e81e0a4ad5e3d7794"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_10.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0169911950627793,
+      "max": 0.9960097763669382,
+      "unique": 349,
+      "hard_labels": false,
+      "sha256": "ed9dfd6c863106db1c40ba54f50dace9eeae9601d15e9fe2ba8601df73049f55"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_11.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0162564195574175,
+      "max": 0.9970435095386728,
+      "unique": 350,
+      "hard_labels": false,
+      "sha256": "f57b05ba7bf63e7ae295747a82a631485a592d19428bd9f53374ada72be3bac1"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_12.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0129113350926878,
+      "max": 0.9968137693365088,
+      "unique": 350,
+      "hard_labels": false,
+      "sha256": "e65829d63f05f320619d1f21eb0b2f0af00ddaa79e7b69ba9ee5f09b18d61f5c"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_13.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.014814254000337,
+      "max": 0.9970594779744116,
+      "unique": 349,
+      "hard_labels": false,
+      "sha256": "58318c32a6311b4bf2fa93001ecf5d7655425485104b191dcaea92155f83b65b"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_14.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0175745778885425,
+      "max": 0.9959118345357892,
+      "unique": 355,
+      "hard_labels": false,
+      "sha256": "4a8ba5b7517883603f4f24a39ef82d1c4515644ce44212be2417a38e442cad2c"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_15.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0168171924978514,
+      "max": 0.9978336068955082,
+      "unique": 349,
+      "hard_labels": false,
+      "sha256": "fbbfa51e5673d38611077685770cd3393d5334ccf9ec1a799b84234d1b00a3c7"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_2.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.013397498657791,
+      "max": 0.9966272102174952,
+      "unique": 350,
+      "hard_labels": false,
+      "sha256": "63accf77b10d71f2966e9e9af63a506c88c7e9c85f0b738e81e0a4ad5e3d7794"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_3.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.013541079757518,
+      "max": 0.9945985538127152,
+      "unique": 352,
+      "hard_labels": false,
+      "sha256": "7016cab089648b80d7f43f09381a3b2a189b57ed1f7e11b1020d232c11934c44"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_4.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0137579732869299,
+      "max": 0.99686471416354,
+      "unique": 350,
+      "hard_labels": false,
+      "sha256": "314b0416a4175fcd79549c44db6cebaefddf8351ce9468a10920bea7d7da8da3"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_5.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0151715153128019,
+      "max": 0.9962368506554902,
+      "unique": 350,
+      "hard_labels": false,
+      "sha256": "43a50e7ac00e19b2b1a9ceaf2ccb6dfdf98b16902d0014cb1c772e60d89ffb3b"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_6.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0144825208573911,
+      "max": 0.9957693820606824,
+      "unique": 348,
+      "hard_labels": false,
+      "sha256": "da61a62ac3a22c80da6f68da10d3942e30e04695216da348f25433208d90aa45"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_7.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0121230030946016,
+      "max": 0.997062561350468,
+      "unique": 350,
+      "hard_labels": false,
+      "sha256": "58127cbff6289196d2b7e90563ae2ff258e5527885d89248940ac04020c205dc"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_8.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0158452038168176,
+      "max": 0.9964212954588728,
+      "unique": 350,
+      "hard_labels": false,
+      "sha256": "6a01d2ef80b781ee391fe27b924d332d8aba89493efa060d8c64b0d80aebea46"
+    },
+    {
+      "file": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_9.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0158939072522056,
+      "max": 0.9964515191489512,
+      "unique": 351,
+      "hard_labels": false,
+      "sha256": "db3b1d75d3820d9016eea1d89a03e0101d33bc2524fbefdc4d1072f470829eb0"
+    },
+    {
+      "file": "C:\\dev\\project\\kaggle_skn35 v1\\submission\\2. model_result.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0,
+      "max": 1.0,
+      "unique": 2,
+      "hard_labels": true,
+      "sha256": "cfb459e2d17c6e4532447756ae5826b90a4950c4616cbb84e0646847505a1acb"
+    },
+    {
+      "file": "C:\\dev\\project\\kaggle_skn35 v1\\submission\\3. model_feature_add_result.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.00039410347,
+      "max": 0.99991775,
+      "unique": 344,
+      "hard_labels": false,
+      "sha256": "d6c990c8a2ec4ed96417cc3162f58cce6b53d66b3339c38b12093321192ba075"
+    },
+    {
+      "file": "C:\\dev\\project\\kaggle_skn35 v1\\submission\\4. model_feature_add2_result.csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0244857309342877,
+      "max": 0.9980190731851448,
+      "unique": 351,
+      "hard_labels": false,
+      "sha256": "44df0c345325055e78cedf630161de72437af79a6e933525e58054b19bea65f6"
+    },
+    {
+      "file": "C:\\dev\\project\\kaggle_skn35 v1\\submission\\base_model_0909_01_(95.36).csv",
+      "shape": [
+        393,
+        2
+      ],
+      "columns": [
+        "passengerid",
+        "survived"
+      ],
+      "id_match": true,
+      "id_unique": true,
+      "finite": true,
+      "range_ok": true,
+      "min": 0.0,
+      "max": 1.0,
+      "unique": 2,
+      "hard_labels": true,
+      "sha256": "651b807c49042e2301811e685046713173b89e08f6a01fcb61d777ae617b3386"
+    }
+  ],
+  "models": {
+    "Base": {
+      "train_auc": 0.9630787245541345,
+      "validation_auc": 0.900065051227842,
+      "gap": 0.06301367332629249,
+      "confusion_matrix_holdout": [
+        [
+          129,
+          14
+        ],
+        [
+          18,
+          68
+        ]
+      ],
+      "holdout_params": {
+        "nan_mode": "Min",
+        "eval_metric": "Logloss",
+        "iterations": 1000,
+        "sampling_frequency": "PerTree",
+        "leaf_estimation_method": "Newton",
+        "random_score_type": "NormalWithModelSizeDecrease",
+        "grow_policy": "SymmetricTree",
+        "penalties_coefficient": 1,
+        "boosting_type": "Plain",
+        "model_shrink_mode": "Constant",
+        "feature_border_type": "GreedyLogSum",
+        "bayesian_matrix_reg": 0.10000000149011612,
+        "eval_fraction": 0,
+        "force_unit_auto_pair_weights": false,
+        "l2_leaf_reg": 3,
+        "random_strength": 1,
+        "rsm": 1,
+        "boost_from_average": false,
+        "model_size_reg": 0.5,
+        "pool_metainfo_options": {
+          "tags": {}
+        },
+        "subsample": 0.800000011920929,
+        "use_best_model": false,
+        "class_names": [
+          0,
+          1
+        ],
+        "random_seed": 42,
+        "depth": 6,
+        "posterior_sampling": false,
+        "border_count": 254,
+        "classes_count": 0,
+        "auto_class_weights": "None",
+        "sparse_features_conflict_fraction": 0,
+        "leaf_estimation_backtracking": "AnyImprovement",
+        "best_model_min_trees": 1,
+        "model_shrink_rate": 0,
+        "min_data_in_leaf": 1,
+        "loss_function": "Logloss",
+        "learning_rate": 0.008775999769568443,
+        "score_function": "Cosine",
+        "task_type": "CPU",
+        "leaf_estimation_iterations": 10,
+        "bootstrap_type": "MVS",
+        "max_leaves": 64
+      },
+      "full_params": {
+        "nan_mode": "Min",
+        "eval_metric": "Logloss",
+        "iterations": 1000,
+        "sampling_frequency": "PerTree",
+        "leaf_estimation_method": "Newton",
+        "random_score_type": "NormalWithModelSizeDecrease",
+        "grow_policy": "SymmetricTree",
+        "penalties_coefficient": 1,
+        "boosting_type": "Plain",
+        "model_shrink_mode": "Constant",
+        "feature_border_type": "GreedyLogSum",
+        "bayesian_matrix_reg": 0.10000000149011612,
+        "eval_fraction": 0,
+        "force_unit_auto_pair_weights": false,
+        "l2_leaf_reg": 3,
+        "random_strength": 1,
+        "rsm": 1,
+        "boost_from_average": false,
+        "model_size_reg": 0.5,
+        "pool_metainfo_options": {
+          "tags": {}
+        },
+        "subsample": 0.800000011920929,
+        "use_best_model": false,
+        "class_names": [
+          0,
+          1
+        ],
+        "random_seed": 42,
+        "depth": 6,
+        "posterior_sampling": false,
+        "border_count": 254,
+        "classes_count": 0,
+        "auto_class_weights": "None",
+        "sparse_features_conflict_fraction": 0,
+        "leaf_estimation_backtracking": "AnyImprovement",
+        "best_model_min_trees": 1,
+        "model_shrink_rate": 0,
+        "min_data_in_leaf": 1,
+        "loss_function": "Logloss",
+        "learning_rate": 0.009922999888658524,
+        "score_function": "Cosine",
+        "task_type": "CPU",
+        "leaf_estimation_iterations": 10,
+        "bootstrap_type": "MVS",
+        "max_leaves": 64
+      },
+      "features": [
+        "pclass",
+        "age",
+        "sibsp",
+        "parch",
+        "fare",
+        "FamilySize",
+        "IsAlone",
+        "gender_female",
+        "gender_male",
+        "embarked_C",
+        "embarked_Q",
+        "embarked_S"
+      ],
+      "submission_max_absolute_difference": 1.1102230246251565E-16,
+      "submission_reproduced": true,
+      "folds": [
+        0.8919172932330827,
+        0.9190821256038647,
+        0.8787821001779812,
+        0.9064327485380117,
+        0.9126620900076278
+      ],
+      "cv_mean": 0.9017752715121137,
+      "cv_std_ddof1": 0.016321824128332087,
+      "oof_auc": 0.8998757732481493,
+      "confusion_matrix_oof": [
+        [
+          529,
+          41
+        ],
+        [
+          83,
+          263
+        ]
+      ]
+    },
+    "11": {
+      "train_auc": 0.9647946315979103,
+      "validation_auc": 0.906488859977232,
+      "gap": 0.05830577162067829,
+      "confusion_matrix_holdout": [
+        [
+          130,
+          13
+        ],
+        [
+          18,
+          68
+        ]
+      ],
+      "holdout_params": {
+        "nan_mode": "Min",
+        "eval_metric": "Logloss",
+        "iterations": 1000,
+        "sampling_frequency": "PerTree",
+        "leaf_estimation_method": "Newton",
+        "random_score_type": "NormalWithModelSizeDecrease",
+        "grow_policy": "SymmetricTree",
+        "penalties_coefficient": 1,
+        "boosting_type": "Plain",
+        "model_shrink_mode": "Constant",
+        "feature_border_type": "GreedyLogSum",
+        "bayesian_matrix_reg": 0.10000000149011612,
+        "eval_fraction": 0,
+        "force_unit_auto_pair_weights": false,
+        "l2_leaf_reg": 3,
+        "random_strength": 1,
+        "rsm": 1,
+        "boost_from_average": false,
+        "model_size_reg": 0.5,
+        "pool_metainfo_options": {
+          "tags": {}
+        },
+        "subsample": 0.800000011920929,
+        "use_best_model": false,
+        "class_names": [
+          0,
+          1
+        ],
+        "random_seed": 42,
+        "depth": 6,
+        "posterior_sampling": false,
+        "border_count": 254,
+        "classes_count": 0,
+        "auto_class_weights": "None",
+        "sparse_features_conflict_fraction": 0,
+        "leaf_estimation_backtracking": "AnyImprovement",
+        "best_model_min_trees": 1,
+        "model_shrink_rate": 0,
+        "min_data_in_leaf": 1,
+        "loss_function": "Logloss",
+        "learning_rate": 0.008775999769568443,
+        "score_function": "Cosine",
+        "task_type": "CPU",
+        "leaf_estimation_iterations": 10,
+        "bootstrap_type": "MVS",
+        "max_leaves": 64
+      },
+      "full_params": {
+        "nan_mode": "Min",
+        "eval_metric": "Logloss",
+        "iterations": 1000,
+        "sampling_frequency": "PerTree",
+        "leaf_estimation_method": "Newton",
+        "random_score_type": "NormalWithModelSizeDecrease",
+        "grow_policy": "SymmetricTree",
+        "penalties_coefficient": 1,
+        "boosting_type": "Plain",
+        "model_shrink_mode": "Constant",
+        "feature_border_type": "GreedyLogSum",
+        "bayesian_matrix_reg": 0.10000000149011612,
+        "eval_fraction": 0,
+        "force_unit_auto_pair_weights": false,
+        "l2_leaf_reg": 3,
+        "random_strength": 1,
+        "rsm": 1,
+        "boost_from_average": false,
+        "model_size_reg": 0.5,
+        "pool_metainfo_options": {
+          "tags": {}
+        },
+        "subsample": 0.800000011920929,
+        "use_best_model": false,
+        "class_names": [
+          0,
+          1
+        ],
+        "random_seed": 42,
+        "depth": 6,
+        "posterior_sampling": false,
+        "border_count": 254,
+        "classes_count": 0,
+        "auto_class_weights": "None",
+        "sparse_features_conflict_fraction": 0,
+        "leaf_estimation_backtracking": "AnyImprovement",
+        "best_model_min_trees": 1,
+        "model_shrink_rate": 0,
+        "min_data_in_leaf": 1,
+        "loss_function": "Logloss",
+        "learning_rate": 0.009922999888658524,
+        "score_function": "Cosine",
+        "task_type": "CPU",
+        "leaf_estimation_iterations": 10,
+        "bootstrap_type": "MVS",
+        "max_leaves": 64
+      },
+      "features": [
+        "pclass",
+        "age",
+        "sibsp",
+        "parch",
+        "fare",
+        "FamilySize",
+        "IsAlone",
+        "gender_female",
+        "gender_male",
+        "embarked_C",
+        "embarked_Q",
+        "embarked_S",
+        "GenderClass_female_1",
+        "GenderClass_female_2",
+        "GenderClass_female_3",
+        "GenderClass_male_1",
+        "GenderClass_male_2",
+        "GenderClass_male_3",
+        "GenderIsChild_female_0",
+        "GenderIsChild_female_1",
+        "GenderIsChild_male_0",
+        "GenderIsChild_male_1",
+        "ClassIsChild_1_0",
+        "ClassIsChild_1_1",
+        "ClassIsChild_2_0",
+        "ClassIsChild_2_1",
+        "ClassIsChild_3_0",
+        "ClassIsChild_3_1"
+      ],
+      "submission_max_absolute_difference": 1.1102230246251565E-16,
+      "submission_reproduced": true,
+      "folds": [
+        0.8979323308270678,
+        0.9263285024154589,
+        0.8785278413424867,
+        0.9117721840833969,
+        0.9166031019577929
+      ],
+      "cv_mean": 0.9062327921252408,
+      "cv_std_ddof1": 0.018564264845361396,
+      "oof_auc": 0.9043885001521144,
+      "confusion_matrix_oof": [
+        [
+          529,
+          41
+        ],
+        [
+          80,
+          266
+        ]
+      ]
+    },
+    "15": {
+      "train_auc": 0.965299045217078,
+      "validation_auc": 0.9036428687591479,
+      "gap": 0.06165617645793009,
+      "confusion_matrix_holdout": [
+        [
+          130,
+          13
+        ],
+        [
+          18,
+          68
+        ]
+      ],
+      "holdout_params": {
+        "nan_mode": "Min",
+        "eval_metric": "Logloss",
+        "iterations": 1000,
+        "sampling_frequency": "PerTree",
+        "leaf_estimation_method": "Newton",
+        "random_score_type": "NormalWithModelSizeDecrease",
+        "grow_policy": "SymmetricTree",
+        "penalties_coefficient": 1,
+        "boosting_type": "Plain",
+        "model_shrink_mode": "Constant",
+        "feature_border_type": "GreedyLogSum",
+        "bayesian_matrix_reg": 0.10000000149011612,
+        "eval_fraction": 0,
+        "force_unit_auto_pair_weights": false,
+        "l2_leaf_reg": 3,
+        "random_strength": 1,
+        "rsm": 1,
+        "boost_from_average": false,
+        "model_size_reg": 0.5,
+        "pool_metainfo_options": {
+          "tags": {}
+        },
+        "subsample": 0.800000011920929,
+        "use_best_model": false,
+        "class_names": [
+          0,
+          1
+        ],
+        "random_seed": 42,
+        "depth": 6,
+        "posterior_sampling": false,
+        "border_count": 254,
+        "classes_count": 0,
+        "auto_class_weights": "None",
+        "sparse_features_conflict_fraction": 0,
+        "leaf_estimation_backtracking": "AnyImprovement",
+        "best_model_min_trees": 1,
+        "model_shrink_rate": 0,
+        "min_data_in_leaf": 1,
+        "loss_function": "Logloss",
+        "learning_rate": 0.008775999769568443,
+        "score_function": "Cosine",
+        "task_type": "CPU",
+        "leaf_estimation_iterations": 10,
+        "bootstrap_type": "MVS",
+        "max_leaves": 64
+      },
+      "full_params": {
+        "nan_mode": "Min",
+        "eval_metric": "Logloss",
+        "iterations": 1000,
+        "sampling_frequency": "PerTree",
+        "leaf_estimation_method": "Newton",
+        "random_score_type": "NormalWithModelSizeDecrease",
+        "grow_policy": "SymmetricTree",
+        "penalties_coefficient": 1,
+        "boosting_type": "Plain",
+        "model_shrink_mode": "Constant",
+        "feature_border_type": "GreedyLogSum",
+        "bayesian_matrix_reg": 0.10000000149011612,
+        "eval_fraction": 0,
+        "force_unit_auto_pair_weights": false,
+        "l2_leaf_reg": 3,
+        "random_strength": 1,
+        "rsm": 1,
+        "boost_from_average": false,
+        "model_size_reg": 0.5,
+        "pool_metainfo_options": {
+          "tags": {}
+        },
+        "subsample": 0.800000011920929,
+        "use_best_model": false,
+        "class_names": [
+          0,
+          1
+        ],
+        "random_seed": 42,
+        "depth": 6,
+        "posterior_sampling": false,
+        "border_count": 254,
+        "classes_count": 0,
+        "auto_class_weights": "None",
+        "sparse_features_conflict_fraction": 0,
+        "leaf_estimation_backtracking": "AnyImprovement",
+        "best_model_min_trees": 1,
+        "model_shrink_rate": 0,
+        "min_data_in_leaf": 1,
+        "loss_function": "Logloss",
+        "learning_rate": 0.009922999888658524,
+        "score_function": "Cosine",
+        "task_type": "CPU",
+        "leaf_estimation_iterations": 10,
+        "bootstrap_type": "MVS",
+        "max_leaves": 64
+      },
+      "features": [
+        "pclass",
+        "age",
+        "sibsp",
+        "parch",
+        "fare",
+        "FamilySize",
+        "IsAlone",
+        "gender_female",
+        "gender_male",
+        "embarked_C",
+        "embarked_Q",
+        "embarked_S",
+        "GenderClass_female_1",
+        "GenderClass_female_2",
+        "GenderClass_female_3",
+        "GenderClass_male_1",
+        "GenderClass_male_2",
+        "GenderClass_male_3",
+        "GenderIsChild_female_0",
+        "GenderIsChild_female_1",
+        "GenderIsChild_male_0",
+        "GenderIsChild_male_1",
+        "ClassIsChild_1_0",
+        "ClassIsChild_1_1",
+        "ClassIsChild_2_0",
+        "ClassIsChild_2_1",
+        "ClassIsChild_3_0",
+        "ClassIsChild_3_1",
+        "AgeBand_Adult",
+        "AgeBand_Child",
+        "AgeBand_Senior",
+        "AgeBand_Teen",
+        "AgeBand_YoungAdult"
+      ],
+      "submission_max_absolute_difference": 1.1102230246251565E-16,
+      "submission_reproduced": true,
+      "folds": [
+        0.9010651629072682,
+        0.9237859140605136,
+        0.8797991355199594,
+        0.9121535723366387,
+        0.9145690312738368
+      ],
+      "cv_mean": 0.9062745632196434,
+      "cv_std_ddof1": 0.016867827959369617,
+      "oof_auc": 0.9042465267214278,
+      "confusion_matrix_oof": [
+        [
+          529,
+          41
+        ],
+        [
+          82,
+          264
+        ]
+      ]
+    }
+  },
+  "identical_submissions": [
+    [
+      "submission_result_1.csv",
+      "titanic_result_2.csv"
+    ]
+  ],
+  "prediction_changes": {
+    "mean_abs": 0.00892108050551991,
+    "max_abs": 0.08248930200187066,
+    "spearman": 0.9889848519597577,
+    "class_flips_at_05": 1,
+    "by_ageband": [
+      {
+        "AgeBand": "Adult",
+        "n": 107,
+        "mean_delta": -0.007134000984545554,
+        "mean_abs_delta": 0.0124244855784443
+      },
+      {
+        "AgeBand": "Child",
+        "n": 36,
+        "mean_delta": -0.0010339236877427245,
+        "mean_abs_delta": 0.014163175452836982
+      },
+      {
+        "AgeBand": "Senior",
+        "n": 13,
+        "mean_delta": 0.0010980331744160183,
+        "mean_abs_delta": 0.009082659206767933
+      },
+      {
+        "AgeBand": "Teen",
+        "n": 33,
+        "mean_delta": -0.006122905763867142,
+        "mean_abs_delta": 0.009137122406494856
+      },
+      {
+        "AgeBand": "YoungAdult",
+        "n": 204,
+        "mean_delta": 0.0028387191437041063,
+        "mean_abs_delta": 0.00611318998221245
+      }
+    ]
+  },
+  "distributions": {
+    "train": {
+      "n": 916,
+      "female_fraction": 0.3569868995633188,
+      "age_missing": 0.1965065502183406,
+      "cabin_missing": 0.7838427947598253,
+      "age_mean_observed": 29.69836956521739,
+      "fare_mean": 32.40271048034934,
+      "pclass": {
+        "3": 0.5403930131004366,
+        "1": 0.24781659388646288,
+        "2": 0.21179039301310043
+      },
+      "ticket_overlap_other": 209
+    },
+    "test": {
+      "n": 393,
+      "female_fraction": 0.35368956743002544,
+      "age_missing": 0.21119592875318066,
+      "cabin_missing": 0.7531806615776081,
+      "age_mean_observed": 30.315064516129034,
+      "fare_mean": 35.3816431122449,
+      "pclass": {
+        "3": 0.544529262086514,
+        "1": 0.24427480916030533,
+        "2": 0.21119592875318066
+      },
+      "ticket_overlap_other": 152
+    },
+    "holdout_train": {
+      "n": 687,
+      "female_fraction": 0.34934497816593885,
+      "age_missing": 0.18340611353711792,
+      "cabin_missing": 0.7903930131004366,
+      "age_mean_observed": 29.50891265597148,
+      "fare_mean": 30.963918195050944,
+      "pclass": {
+        "3": 0.5283842794759825,
+        "1": 0.24017467248908297,
+        "2": 0.2314410480349345
+      }
+    },
+    "holdout_valid": {
+      "n": 229,
+      "female_fraction": 0.3799126637554585,
+      "age_missing": 0.23580786026200873,
+      "cabin_missing": 0.7641921397379913,
+      "age_mean_observed": 30.305714285714284,
+      "fare_mean": 36.71908733624454,
+      "pclass": {
+        "3": 0.5764192139737991,
+        "1": 0.27074235807860264,
+        "2": 0.15283842794759825
+      }
+    }
+  },
+  "local_private_correlations_n3": {
+    "pearson": {
+      "private": 1.0,
+      "validation_auc": 0.4451257443499207,
+      "cv_mean": 0.8000097185486984,
+      "gap": -0.15530390220359594,
+      "oof_auc": 0.7780526019037225
+    },
+    "spearman": {
+      "private": 1.0,
+      "validation_auc": 0.5,
+      "cv_mean": 1.0,
+      "gap": -0.5,
+      "oof_auc": 0.5
+    }
+  }
+}

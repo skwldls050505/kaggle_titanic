@@ -1,0 +1,919 @@
+
+### CELL 1 [markdown] execution=
+# 4. model_feature_add2
+
+3번 실험의 Feature, SMOTE, OOF 구조를 유지하면서 Cabin/Ticket/Fare Feature와 Title × Pclass Age 대체를 추가하고 CatBoost만 사용하는 실험입니다.
+
+### CELL 2 [markdown] execution=
+# 1. Load Dataset
+
+### CELL 3 [code] execution=1
+import numpy as np
+import pandas as pd
+import easydict
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from catboost import CatBoostClassifier
+from imblearn.over_sampling import SMOTE
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import OrdinalEncoder
+
+from common.evaluations import get_auc_score
+
+### CELL 4 [code] execution=2
+# 기존 Notebook과 같은 데이터 경로를 사용합니다.
+args = easydict.EasyDict()
+args.train_file = "./data/train.csv"
+args.test_file = "./data/test.csv"
+args.submission_file = "./data/submission.csv"
+
+train = pd.read_csv(args.train_file)
+test = pd.read_csv(args.test_file)
+submission = pd.read_csv(args.submission_file)
+
+print("train shape:", train.shape)
+print("test shape:", test.shape)
+print("submission shape:", submission.shape)
+OUTPUT:
+train shape: (916, 12)
+test shape: (393, 11)
+submission shape: (393, 2)
+
+
+### CELL 5 [markdown] execution=
+# 2. Target 확인
+
+### CELL 6 [code] execution=3
+# 각 class의 비율을 확인합니다.
+train["survived"].value_counts() / train.shape[0]
+OUTPUT:
+survived
+0    0.622271
+1    0.377729
+Name: count, dtype: float64
+
+### CELL 7 [markdown] execution=
+# 3. Train 중복 제거
+
+### CELL 8 [code] execution=4
+# 기존 모델과 동일하게 학습 데이터의 중복 행만 제거합니다.
+print(f"before: {train.shape}")
+train.drop_duplicates(inplace=True)
+print(f"after: {train.shape}")
+OUTPUT:
+before: (916, 12)
+after: (916, 12)
+
+
+### CELL 9 [markdown] execution=
+# 4. Feature Engineering과 결측치 처리
+
+HasCabin과 Deck은 cabin 결측치를 채우기 전에 만들고, Title은 Age 결측치를 채우기 전에 만듭니다.
+
+### CELL 10 [markdown] execution=
+## 4-1. Title / Occupation / IsNoble
+
+### CELL 11 [code] execution=5
+# 실제 이름이 'Lastname, Title. Firstname' 형태인지 확인합니다.
+print(train[["name"]].head(10))
+
+# Age를 채우기 전에 이름에서 원래 Title을 추출합니다.
+train_title_preview = (
+    train["name"]
+    .str.extract(r",\s*([^.]*)\.")[0]
+    .str.strip()
+)
+
+train_title_counts = train_title_preview.value_counts()
+common_titles = train_title_counts[train_title_counts >= 10].index.tolist()
+
+print("Train 원본 Title 개수")
+print(train_title_counts)
+print("\n그대로 유지할 Title:", common_titles)
+OUTPUT:
+                                                name
+0                     Wheeler, Mr. Edwin Frederick""
+1                                 Henry, Miss. Delia
+2  Hays, Mrs. Charles Melville (Clara Jennings Gr...
+3       Andersson, Mr. August Edvard ("Wennerstrom")
+4                                  Hold, Mr. Stephen
+5           Rosblom, Mrs. Viktor (Helena Wilhelmina)
+6                                Novel, Mr. Mansouer
+7           Kelly, Miss. Anna Katherine "Annie Kate"
+8                         de Brito, Mr. Jose Joaquim
+9                               Petersen, Mr. Marius
+Train 원본 Title 개수
+0
+Mr              528
+Miss            185
+Mrs             138
+Master           42
+Rev               6
+Dr                5
+Col               3
+Major             2
+Don               1
+Ms                1
+Jonkheer          1
+Mlle              1
+the Countess      1
+Capt              1
+Sir               1
+Name: count, dtype: int64
+
+그대로 유지할 Title: ['Mr', 'Miss', 'Mrs', 'Master']
+
+
+### CELL 12 [code] execution=6
+def add_title_features(data):
+    """3번 실험과 같은 방법으로 이름 관련 Feature를 만듭니다."""
+
+    data = data.copy()
+
+    # 이름의 쉼표 뒤부터 마침표 앞까지를 원래 Title로 추출합니다.
+    original_title = (
+        data["name"]
+        .str.extract(r",\s*([^.]*)\.")[0]
+        .str.strip()
+    )
+
+    # 직업이나 사회적 역할을 나타내는 Title만 간단히 구분합니다.
+    data["Occupation"] = "Other"
+    data.loc[original_title == "Dr", "Occupation"] = "Doctor"
+    data.loc[original_title == "Rev", "Occupation"] = "Clergy"
+    data.loc[
+        original_title.isin(["Col", "Major", "Capt"]),
+        "Occupation",
+    ] = "Military"
+
+    # 실제 Train/Test에서 확인된 귀족 또는 상류계급 관련 Title입니다.
+    noble_titles = [
+        "Sir", "Lady", "the Countess",
+        "Don", "Dona", "Jonkheer",
+    ]
+    data["IsNoble"] = original_title.isin(noble_titles).astype(int)
+
+    # 자주 등장하는 Title은 유지하고 나머지는 Rare로 묶습니다.
+    data["Title"] = original_title
+    data.loc[~data["Title"].isin(common_titles), "Title"] = "Rare"
+
+    return data
+
+
+# Train과 Test에 같은 이름 Feature 생성 규칙을 적용합니다.
+train = add_title_features(train)
+test = add_title_features(test)
+
+assert "Title" in train.columns
+print(train[["name", "Title", "Occupation", "IsNoble"]].head(10))
+OUTPUT:
+                                                name Title Occupation  IsNoble
+0                     Wheeler, Mr. Edwin Frederick""    Mr      Other        0
+1                                 Henry, Miss. Delia  Miss      Other        0
+2  Hays, Mrs. Charles Melville (Clara Jennings Gr...   Mrs      Other        0
+3       Andersson, Mr. August Edvard ("Wennerstrom")    Mr      Other        0
+4                                  Hold, Mr. Stephen    Mr      Other        0
+5           Rosblom, Mrs. Viktor (Helena Wilhelmina)   Mrs      Other        0
+6                                Novel, Mr. Mansouer    Mr      Other        0
+7           Kelly, Miss. Anna Katherine "Annie Kate"  Miss      Other        0
+8                         de Brito, Mr. Jose Joaquim    Mr      Other        0
+9                               Petersen, Mr. Marius    Mr      Other        0
+
+
+### CELL 13 [markdown] execution=
+## 4-2. HasCabin / Deck
+
+### CELL 14 [code] execution=7
+# cabin 결측치를 채우기 전에 객실 정보 존재 여부와 Deck을 만듭니다.
+for frame in [train, test]:
+    # Cabin 정보가 있으면 1, 없으면 0입니다.
+    frame["HasCabin"] = frame["cabin"].notna().astype(int)
+
+    # Cabin 문자열의 첫 글자를 Deck으로 사용하고, 없으면 Unknown으로 표시합니다.
+    frame["Deck"] = frame["cabin"].str[0].fillna("Unknown")
+
+print(train[["cabin", "HasCabin", "Deck"]].head(10))
+assert train.loc[train["cabin"].isna(), "HasCabin"].eq(0).all()
+assert test.loc[test["cabin"].isna(), "Deck"].eq("Unknown").all()
+OUTPUT:
+  cabin  HasCabin     Deck
+0   NaN         0  Unknown
+1   NaN         0  Unknown
+2   B69         1        B
+3   NaN         0  Unknown
+4   NaN         0  Unknown
+5   NaN         0  Unknown
+6   NaN         0  Unknown
+7   NaN         0  Unknown
+8   NaN         0  Unknown
+9   NaN         0  Unknown
+
+
+### CELL 15 [markdown] execution=
+## 4-3. TicketGroupSize
+
+### CELL 16 [code] execution=8
+# 같은 Ticket 번호를 가진 인원수를 Train과 Test에서 각각 계산합니다.
+train["TicketGroupSize"] = (
+    train.groupby("ticket")["ticket"].transform("count")
+)
+test["TicketGroupSize"] = (
+    test.groupby("ticket")["ticket"].transform("count")
+)
+
+assert train["TicketGroupSize"].gt(0).all()
+assert test["TicketGroupSize"].gt(0).all()
+print(train[["ticket", "TicketGroupSize"]].head(10))
+OUTPUT:
+          ticket  TicketGroupSize
+0  SC/PARIS 2159                1
+1         382649                1
+2          12749                2
+3         350043                1
+4          26707                2
+5         370129                3
+6           2697                1
+7           9234                1
+8         244360                1
+9         342441                1
+
+
+### CELL 17 [markdown] execution=
+## 4-4. Title × Pclass 기반 Age 결측치 처리
+
+### CELL 18 [code] execution=9
+# Age 대체 통계량은 결측치가 남아 있는 원본 Train에서만 계산합니다.
+age_median_by_title_pclass = train.groupby(
+    ["Title", "pclass"]
+)["age"].median()
+age_median_by_title = train.groupby("Title")["age"].median()
+age_median_all = train["age"].median()
+
+
+def fill_age_from_train(data):
+    """Train에서 계산한 중앙값만 사용하여 Age 결측치를 채웁니다."""
+
+    data = data.copy()
+    missing_age_indexes = data.index[data["age"].isna()]
+
+    for index in missing_age_indexes:
+        title = data.at[index, "Title"]
+        pclass = data.at[index, "pclass"]
+
+        # 첫 번째 선택: 같은 Title과 pclass를 가진 Train 승객의 중앙값
+        fill_value = age_median_by_title_pclass.get((title, pclass), np.nan)
+
+        # 두 번째 선택: 같은 Title을 가진 Train 승객의 중앙값
+        if pd.isna(fill_value):
+            fill_value = age_median_by_title.get(title, np.nan)
+
+        # 마지막 선택: Train 전체 Age 중앙값
+        if pd.isna(fill_value):
+            fill_value = age_median_all
+
+        data.at[index, "age"] = fill_value
+
+    return data
+
+
+print("Age 결측치 처리 전:", train["age"].isna().sum(), test["age"].isna().sum())
+train = fill_age_from_train(train)
+test = fill_age_from_train(test)
+print("Age 결측치 처리 후:", train["age"].isna().sum(), test["age"].isna().sum())
+assert train["age"].isna().sum() == 0
+assert test["age"].isna().sum() == 0
+OUTPUT:
+Age 결측치 처리 전: 180 83
+
+OUTPUT:
+Age 결측치 처리 후: 0 0
+
+
+### CELL 19 [markdown] execution=
+## 4-5. 나머지 결측치 처리
+
+### CELL 20 [code] execution=10
+# Age 이외의 결측치는 기존 모델과 같이 Train의 평균 또는 최빈값으로 채웁니다.
+print(f"before: {train.isnull().sum().sum()} / {test.isnull().sum().sum()}")
+
+for frame in [train, test]:
+    null_count = frame.isnull().sum()
+    null_cols = null_count[null_count > 0].index
+
+    for col in null_cols:
+        try:
+            frame[col] = frame[col].fillna(train[col].mean())
+        except Exception:
+            frame[col] = frame[col].fillna(train[col].mode().values[0])
+
+print(f"after: {train.isnull().sum().sum()} / {test.isnull().sum().sum()}")
+assert train.isnull().sum().sum() == 0
+assert test.isnull().sum().sum() == 0
+OUTPUT:
+before: 719 / 298
+after: 0 / 0
+
+
+### CELL 21 [markdown] execution=
+## 4-6. FamilySize / IsAlone / FarePerPerson
+
+### CELL 22 [code] execution=11
+# 기존 FamilySize와 IsAlone Feature를 그대로 만듭니다.
+for frame in [train, test]:
+    # sibsp + parch + 승객 본인 1명으로 전체 가족 수를 계산합니다.
+    frame["FamilySize"] = (
+        frame["sibsp"]
+        + frame["parch"]
+        + 1
+    )
+
+    # 가족 수가 1명이면 혼자 탑승한 승객입니다.
+    frame["IsAlone"] = (frame["FamilySize"] == 1).astype(int)
+
+    # Ticket 그룹 인원수를 고려한 1인당 요금을 계산합니다.
+    # TicketGroupSize가 0보다 큰지 위에서 확인했으므로 0으로 나누지 않습니다.
+    frame["FarePerPerson"] = (
+        frame["fare"] / frame["TicketGroupSize"]
+    )
+
+# FarePerPerson에 NaN, inf, -inf가 없는지 확인합니다.
+for frame_name, frame in [("train", train), ("test", test)]:
+    assert frame["FarePerPerson"].notna().all()
+    assert np.isfinite(frame["FarePerPerson"]).all()
+    print(f"{frame_name} FarePerPerson 검증 완료")
+OUTPUT:
+train FarePerPerson 검증 완료
+test FarePerPerson 검증 완료
+
+
+### CELL 23 [markdown] execution=
+## 4-7. 생성 결과 확인
+
+### CELL 24 [code] execution=12
+new_feature_cols = [
+    "FamilySize",
+    "IsAlone",
+    "Title",
+    "Occupation",
+    "IsNoble",
+    "HasCabin",
+    "Deck",
+    "TicketGroupSize",
+    "FarePerPerson",
+]
+
+print(train.columns)
+print(test.columns)
+train[["name"] + new_feature_cols].head(10)
+OUTPUT:
+Index(['passengerid', 'survived', 'pclass', 'name', 'gender', 'age', 'sibsp',
+       'parch', 'ticket', 'fare', 'cabin', 'embarked', 'Occupation', 'IsNoble',
+       'Title', 'HasCabin', 'Deck', 'TicketGroupSize', 'FamilySize', 'IsAlone',
+       'FarePerPerson'],
+      dtype='str')
+Index(['passengerid', 'pclass', 'name', 'gender', 'age', 'sibsp', 'parch',
+       'ticket', 'fare', 'cabin', 'embarked', 'Occupation', 'IsNoble', 'Title',
+       'HasCabin', 'Deck', 'TicketGroupSize', 'FamilySize', 'IsAlone',
+       'FarePerPerson'],
+      dtype='str')
+
+OUTPUT:
+                                                name  FamilySize  IsAlone  \
+0                     Wheeler, Mr. Edwin Frederick""           1        1   
+1                                 Henry, Miss. Delia           1        1   
+2  Hays, Mrs. Charles Melville (Clara Jennings Gr...           3        0   
+3       Andersson, Mr. August Edvard ("Wennerstrom")           1        1   
+4                                  Hold, Mr. Stephen           2        0   
+5           Rosblom, Mrs. Viktor (Helena Wilhelmina)           3        0   
+6                                Novel, Mr. Mansouer           1        1   
+7           Kelly, Miss. Anna Katherine "Annie Kate"           1        1   
+8                         de Brito, Mr. Jose Joaquim           1        1   
+9                               Petersen, Mr. Marius           1        1   
+
+  Title Occupation  IsNoble  HasCabin     Deck  TicketGroupSize  FarePerPerson  
+0    Mr      Other        0         0  Unknown                1        12.8750  
+1  Miss      Other        0         0  Unknown                1         7.7500  
+2   Mrs      Other        0         1        B                2        46.7500  
+3    Mr      Other        0         0  Unknown                1         7.7958  
+4    Mr      Other        0         0  Unknown                2        13.0000  
+5   Mrs      Other        0         0  Unknown                3         6.7375  
+6    Mr      Other        0         0  Unknown                1         7.2292  
+7  Miss      Other        0         0  Unknown                1         7.7500  
+8    Mr      Other        0         0  Unknown                1        13.0000  
+9    Mr      Other        0         0  Unknown                1         8.0500  
+
+### CELL 25 [markdown] execution=
+# 5. 불필요한 기존 컬럼 제거
+
+### CELL 26 [code] execution=13
+# 필요한 Feature를 모두 만든 뒤 원본 문자열 열을 제거합니다.
+drop_cols = ["name", "ticket", "cabin", "embarked"]
+train.drop(drop_cols, axis=1, inplace=True)
+test.drop(drop_cols, axis=1, inplace=True)
+
+# passengerid는 모델 Feature가 아니므로 index로 설정합니다.
+train.set_index(["passengerid"], inplace=True)
+test.set_index(["passengerid"], inplace=True)
+
+assert train.isnull().sum().sum() == 0
+assert test.isnull().sum().sum() == 0
+print("Train/Test 최종 결측치: 0 / 0")
+OUTPUT:
+Train/Test 최종 결측치: 0 / 0
+
+
+### CELL 27 [markdown] execution=
+# 6. cat_cols / features / target 설정
+
+### CELL 28 [code] execution=14
+# Deck을 새로운 범주형 Feature로 추가합니다.
+cat_cols = [
+    "pclass",
+    "gender",
+    "Title",
+    "Occupation",
+    "Deck",
+]
+
+features = train.drop(["survived"], axis=1)
+target = train["survived"]
+
+# 요청한 모든 Feature가 실제 학습 데이터에 포함됐는지 확인합니다.
+for feature_name in new_feature_cols:
+    assert feature_name in features.columns, f"{feature_name}이 features에 없습니다."
+
+for category_name in cat_cols:
+    assert category_name in features.columns, f"{category_name}이 features에 없습니다."
+
+assert "Deck" in cat_cols
+print("features columns:", features.columns.tolist())
+print("cat_cols:", cat_cols)
+OUTPUT:
+features columns: ['pclass', 'gender', 'age', 'sibsp', 'parch', 'fare', 'Occupation', 'IsNoble', 'Title', 'HasCabin', 'Deck', 'TicketGroupSize', 'FamilySize', 'IsAlone', 'FarePerPerson']
+cat_cols: ['pclass', 'gender', 'Title', 'Occupation', 'Deck']
+
+
+### CELL 29 [markdown] execution=
+# 7. CatBoost 5-Fold Cross Validation + SMOTE + OOF
+
+### CELL 30 [code] execution=15
+def cross_validation(features, targets, cat_cols):
+    """Fold Train에만 SMOTE를 적용하고 CatBoost로 평가합니다."""
+
+    stratified_kfold = StratifiedKFold(
+        n_splits=5,
+        shuffle=True,
+        random_state=0,
+    )
+
+    auc_scores = []
+    accuracy_scores = []
+
+    # 각 행이 학습에 포함되지 않았던 Fold의 OOF 결과를 저장합니다.
+    oof_pred = np.zeros(len(features), dtype=int)
+    oof_proba = np.zeros(len(features), dtype=float)
+
+    print("[Feature Add2 + SMOTE + CatBoost Cross Validation]")
+
+    for fold, (train_idx, valid_idx) in enumerate(
+        stratified_kfold.split(features, targets),
+        start=1,
+    ):
+        x_train_fold = features.iloc[train_idx].copy()
+        y_train_fold = targets.iloc[train_idx].copy()
+
+        # Validation 데이터에는 SMOTE를 적용하지 않습니다.
+        x_valid_fold = features.iloc[valid_idx].copy()
+        y_valid_fold = targets.iloc[valid_idx].copy()
+        original_valid_size = len(x_valid_fold)
+
+        # 범주형 인코더는 현재 Fold Train에서만 학습합니다.
+        category_encoder = OrdinalEncoder(
+            handle_unknown="use_encoded_value",
+            unknown_value=-1,
+        )
+        x_train_fold[cat_cols] = category_encoder.fit_transform(
+            x_train_fold[cat_cols]
+        )
+        x_valid_fold[cat_cols] = category_encoder.transform(
+            x_valid_fold[cat_cols]
+        )
+
+        print(f"\nFold {fold}")
+        print("SMOTE 적용 전 클래스 개수")
+        print(y_train_fold.value_counts().sort_index())
+
+        # 현재 Fold Train에만 SMOTE를 적용합니다.
+        smote = SMOTE(random_state=0)
+        x_train_fold, y_train_fold = smote.fit_resample(
+            x_train_fold,
+            y_train_fold,
+        )
+
+        # SMOTE가 만든 범주형 열의 소수값을 가장 가까운 정수 코드로 복구합니다.
+        x_train_fold[cat_cols] = x_train_fold[cat_cols].round().astype("int64")
+        x_valid_fold[cat_cols] = x_valid_fold[cat_cols].astype("int64")
+
+        print("SMOTE 적용 후 클래스 개수")
+        print(y_train_fold.value_counts().sort_index())
+
+        # common의 CatBoost 기본 설정과 같이 verbose=0, cat_features를 사용합니다.
+        fold_model = CatBoostClassifier(
+            verbose=0,
+            cat_features=cat_cols,
+        )
+        fold_model.fit(x_train_fold, y_train_fold)
+
+        # ROC-AUC는 survived=1 확률, Accuracy는 0/1 예측값을 사용합니다.
+        valid_proba = fold_model.predict_proba(x_valid_fold)[:, 1]
+        valid_pred = fold_model.predict(x_valid_fold).astype(int).reshape(-1)
+
+        fold_auc = get_auc_score(y=y_valid_fold, pred=valid_proba)
+        fold_accuracy = accuracy_score(y_valid_fold, valid_pred)
+
+        auc_scores.append(fold_auc)
+        accuracy_scores.append(fold_accuracy)
+        oof_pred[valid_idx] = valid_pred
+        oof_proba[valid_idx] = valid_proba
+
+        print(f"Train 크기: {x_train_fold.shape}")
+        print(f"Validation 크기: {x_valid_fold.shape}")
+        print(f"CatBoost AUC: {fold_auc:.6f}")
+        print(f"CatBoost Accuracy: {fold_accuracy:.6f}")
+        assert len(x_valid_fold) == original_valid_size
+        print("-" * 50)
+
+    print("\n[Feature Add2 + SMOTE + CatBoost CV 결과]")
+    for fold, (auc_score, accuracy) in enumerate(
+        zip(auc_scores, accuracy_scores),
+        start=1,
+    ):
+        print(f"Fold {fold}: AUC={auc_score:.6f}, Accuracy={accuracy:.6f}")
+
+    print(f"AUC Mean: {np.mean(auc_scores):.6f}")
+    print(f"AUC Std: {np.std(auc_scores):.6f}")
+    print(f"Accuracy Mean: {np.mean(accuracy_scores):.6f}")
+    print(f"Accuracy Std: {np.std(accuracy_scores):.6f}")
+
+    return {
+        "auc_scores": auc_scores,
+        "accuracy_scores": accuracy_scores,
+        "auc_mean": np.mean(auc_scores),
+        "auc_std": np.std(auc_scores),
+        "accuracy_mean": np.mean(accuracy_scores),
+        "accuracy_std": np.std(accuracy_scores),
+        "oof_pred": oof_pred,
+        "oof_proba": oof_proba,
+    }
+
+### CELL 31 [code] execution=16
+cv_result = cross_validation(
+    features=features,
+    targets=target,
+    cat_cols=cat_cols,
+)
+
+assert len(cv_result["oof_pred"]) == len(target)
+assert len(cv_result["oof_proba"]) == len(target)
+print("OOF Prediction 길이 확인 완료:", len(target))
+OUTPUT:
+[Feature Add2 + SMOTE + CatBoost Cross Validation]
+
+Fold 1
+SMOTE 적용 전 클래스 개수
+survived
+0    456
+1    276
+Name: count, dtype: int64
+
+OUTPUT:
+SMOTE 적용 후 클래스 개수
+survived
+0    456
+1    456
+Name: count, dtype: int64
+
+OUTPUT:
+Train 크기: (912, 15)
+Validation 크기: (184, 15)
+CatBoost AUC: 0.932331
+CatBoost Accuracy: 0.885870
+--------------------------------------------------
+
+Fold 2
+SMOTE 적용 전 클래스 개수
+survived
+0    456
+1    277
+Name: count, dtype: int64
+SMOTE 적용 후 클래스 개수
+survived
+0    456
+1    456
+Name: count, dtype: int64
+
+OUTPUT:
+Train 크기: (912, 15)
+Validation 크기: (183, 15)
+CatBoost AUC: 0.899186
+CatBoost Accuracy: 0.863388
+--------------------------------------------------
+
+Fold 3
+SMOTE 적용 전 클래스 개수
+survived
+0    456
+1    277
+Name: count, dtype: int64
+SMOTE 적용 후 클래스 개수
+survived
+0    456
+1    456
+Name: count, dtype: int64
+
+OUTPUT:
+Train 크기: (912, 15)
+Validation 크기: (183, 15)
+CatBoost AUC: 0.903318
+CatBoost Accuracy: 0.841530
+--------------------------------------------------
+
+Fold 4
+SMOTE 적용 전 클래스 개수
+survived
+0    456
+1    277
+Name: count, dtype: int64
+SMOTE 적용 후 클래스 개수
+survived
+0    456
+1    456
+Name: count, dtype: int64
+
+OUTPUT:
+Train 크기: (912, 15)
+Validation 크기: (183, 15)
+CatBoost AUC: 0.915840
+CatBoost Accuracy: 0.857923
+--------------------------------------------------
+
+Fold 5
+SMOTE 적용 전 클래스 개수
+survived
+0    456
+1    277
+Name: count, dtype: int64
+SMOTE 적용 후 클래스 개수
+survived
+0    456
+1    456
+Name: count, dtype: int64
+
+OUTPUT:
+Train 크기: (912, 15)
+Validation 크기: (183, 15)
+CatBoost AUC: 0.911709
+CatBoost Accuracy: 0.874317
+--------------------------------------------------
+
+[Feature Add2 + SMOTE + CatBoost CV 결과]
+Fold 1: AUC=0.932331, Accuracy=0.885870
+Fold 2: AUC=0.899186, Accuracy=0.863388
+Fold 3: AUC=0.903318, Accuracy=0.841530
+Fold 4: AUC=0.915840, Accuracy=0.857923
+Fold 5: AUC=0.911709, Accuracy=0.874317
+AUC Mean: 0.912477
+AUC Std: 0.011546
+Accuracy Mean: 0.864606
+Accuracy Std: 0.015001
+OOF Prediction 길이 확인 완료: 916
+
+
+### CELL 32 [markdown] execution=
+# 8. OOF Confusion Matrix
+
+### CELL 33 [code] execution=17
+# 각 행이 학습에 포함되지 않았던 Fold의 0/1 OOF 예측을 사용합니다.
+cm = confusion_matrix(target, cv_result["oof_pred"])
+tn, fp, fn, tp = cm.ravel()
+
+print("TN:", tn)
+print("FP:", fp)
+print("FN:", fn)
+print("TP:", tp)
+
+# 각 실제 class를 기준으로 비율을 확인하는 정규화 Confusion Matrix입니다.
+normalized_cm = confusion_matrix(
+    target,
+    cv_result["oof_pred"],
+    normalize="true",
+)
+disp = ConfusionMatrixDisplay(
+    confusion_matrix=normalized_cm,
+    display_labels=["Dead", "Survived"],
+)
+disp.plot(cmap="Blues", values_format=".2f")
+plt.title("Normalized OOF Confusion Matrix - Feature Add2 + SMOTE + CatBoost")
+plt.show()
+OUTPUT:
+TN: 515
+FP: 55
+FN: 69
+TP: 277
+
+OUTPUT:
+<Figure size 640x480 with 2 Axes>
+
+### CELL 34 [markdown] execution=
+# 9. 전체 Feature Correlation Heatmap
+
+### CELL 35 [code] execution=18
+# 학습 데이터에 영향을 주지 않도록 Heatmap 전용 복사본을 사용합니다.
+corr_df = features.copy()
+corr_df["survived"] = target.values
+
+# 범주형 변수는 시각화를 위해서만 숫자로 변환하며 탐색용으로 해석합니다.
+for col in cat_cols:
+    corr_df[col] = pd.factorize(corr_df[col])[0]
+
+corr_matrix = corr_df.corr()
+plt.figure(figsize=(16, 12))
+sns.heatmap(
+    corr_matrix,
+    annot=True,
+    fmt=".2f",
+    cmap="coolwarm",
+    center=0,
+    square=True,
+)
+plt.title("Feature Add2 Correlation Heatmap")
+plt.xticks(rotation=45, ha="right")
+plt.yticks(rotation=0)
+plt.tight_layout()
+plt.show()
+OUTPUT:
+<Figure size 1600x1200 with 2 Axes>
+
+### CELL 36 [markdown] execution=
+# 10. 전체 Train + SMOTE + CatBoost 최종 학습
+
+### CELL 37 [code] execution=19
+# 범주형 인코더는 전체 Train에서만 학습하고 Test에는 transform만 적용합니다.
+final_encoder = OrdinalEncoder(
+    handle_unknown="use_encoded_value",
+    unknown_value=-1,
+)
+
+x_train_final = features.copy()
+x_test_final = test.copy()
+x_train_final[cat_cols] = final_encoder.fit_transform(x_train_final[cat_cols])
+x_test_final[cat_cols] = final_encoder.transform(x_test_final[cat_cols])
+
+print("전체 Train - SMOTE 적용 전")
+print(target.value_counts().sort_index())
+
+# 최종 학습용 전체 Train에만 SMOTE를 적용합니다. Test에는 적용하지 않습니다.
+final_smote = SMOTE(random_state=0)
+x_train_final, y_train_final = final_smote.fit_resample(
+    x_train_final,
+    target,
+)
+x_train_final[cat_cols] = x_train_final[cat_cols].round().astype("int64")
+x_test_final[cat_cols] = x_test_final[cat_cols].astype("int64")
+
+print("\n전체 Train - SMOTE 적용 후")
+print(y_train_final.value_counts().sort_index())
+print("Test 크기 유지:", x_test_final.shape)
+
+# 여러 모델을 비교하지 않고 CatBoost 하나만 최종 학습합니다.
+final_model = CatBoostClassifier(
+    verbose=0,
+    cat_features=cat_cols,
+)
+final_model.fit(x_train_final, y_train_final)
+print("최종 CatBoost 학습 완료")
+OUTPUT:
+전체 Train - SMOTE 적용 전
+survived
+0    570
+1    346
+Name: count, dtype: int64
+
+전체 Train - SMOTE 적용 후
+survived
+0    570
+1    570
+Name: count, dtype: int64
+Test 크기 유지: (393, 15)
+
+OUTPUT:
+최종 CatBoost 학습 완료
+
+
+### CELL 38 [markdown] execution=
+# 11. Kaggle Test 확률 예측
+
+### CELL 39 [code] execution=20
+# ROC-AUC 제출값은 survived=1의 확률을 사용합니다.
+test_proba = final_model.predict_proba(x_test_final)[:, 1]
+
+print("예측 확률 앞부분:", test_proba[:5])
+print("예측 확률 최솟값:", test_proba.min())
+print("예측 확률 최댓값:", test_proba.max())
+print("예측 확률 고유값 개수:", pd.Series(test_proba).nunique())
+assert len(test_proba) == submission.shape[0]
+OUTPUT:
+예측 확률 앞부분: [0.78859424 0.96011217 0.84524341 0.10483161 0.98380979]
+예측 확률 최솟값: 0.024485730934287776
+예측 확률 최댓값: 0.9980190731851449
+예측 확률 고유값 개수: 351
+
+
+### CELL 40 [markdown] execution=
+# 12. Submission 생성 및 저장
+
+### CELL 41 [code] execution=21
+# 원본 submission 구조를 유지하고 survived 열에 확률값을 넣습니다.
+submission["survived"] = test_proba
+
+assert submission.shape[0] == len(test_proba)
+assert submission["survived"].between(0, 1).all()
+assert submission["survived"].nunique() > 2
+print(submission.shape)
+print(submission.head())
+
+submission_path = "./submission/4. model_feature_add2_result.csv"
+submission.to_csv(submission_path, index=False)
+print(f"저장된 Submission 경로: {submission_path}")
+OUTPUT:
+(393, 2)
+   passengerid  survived
+0          916  0.788594
+1          917  0.960112
+2          918  0.845243
+3          919  0.104832
+4          920  0.983810
+저장된 Submission 경로: ./submission/4. model_feature_add2_result.csv
+
+
+### CELL 42 [markdown] execution=
+# 13. Experiment 4 Summary
+
+### CELL 43 [code] execution=22
+print("========== Experiment 4 Summary ==========")
+print()
+print("Model: CatBoost")
+print("SMOTE: Yes")
+print()
+print("Features Added:")
+print("- HasCabin")
+print("- Deck")
+print("- TicketGroupSize")
+print("- FarePerPerson")
+print()
+print("Age Imputation:")
+print("- Title × Pclass Median")
+print()
+print(f"CV AUC Mean: {cv_result['auc_mean']:.6f}")
+print(f"CV AUC Std: {cv_result['auc_std']:.6f}")
+print(f"CV Accuracy Mean: {cv_result['accuracy_mean']:.6f}")
+print(f"CV Accuracy Std: {cv_result['accuracy_std']:.6f}")
+print()
+print("OOF Confusion Matrix:")
+print(f"TN: {tn}")
+print(f"FP: {fp}")
+print(f"FN: {fn}")
+print(f"TP: {tp}")
+print()
+print("Submission Path:")
+print(submission_path)
+OUTPUT:
+========== Experiment 4 Summary ==========
+
+Model: CatBoost
+SMOTE: Yes
+
+Features Added:
+- HasCabin
+- Deck
+- TicketGroupSize
+- FarePerPerson
+
+Age Imputation:
+- Title × Pclass Median
+
+CV AUC Mean: 0.912477
+CV AUC Std: 0.011546
+CV Accuracy Mean: 0.864606
+CV Accuracy Std: 0.015001
+
+OOF Confusion Matrix:
+TN: 515
+FP: 55
+FN: 69
+TP: 277
+
+Submission Path:
+./submission/4. model_feature_add2_result.csv

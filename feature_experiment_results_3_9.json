@@ -1,0 +1,756 @@
+[
+  {
+    "version": 3,
+    "feature": "Title",
+    "previous_features": [],
+    "candidate_features": [
+      "Title"
+    ],
+    "accepted": false,
+    "scores": {
+      "train_auc": 0.9651684381192578,
+      "validation_auc": 0.9029923564807286,
+      "gap": 0.06217608163852917
+    },
+    "previous_scores": {
+      "train_auc": 0.9630787245541345,
+      "validation_auc": 0.900065051227842,
+      "gap": 0.06301367332629249
+    },
+    "cv": {
+      "mean": 0.9000096255130581,
+      "std": 0.016135974233737443
+    },
+    "previous_cv": {
+      "mean": 0.9017752715121136,
+      "std": 0.016321824128332073
+    },
+    "best_features": [],
+    "best_scores": {
+      "train_auc": 0.9630787245541345,
+      "validation_auc": 0.900065051227842,
+      "gap": 0.06301367332629249
+    },
+    "best_cv": {
+      "mean": 0.9017752715121136,
+      "std": 0.016321824128332073
+    },
+    "holdout_delta": 0.0029273052528866472,
+    "original_delta": 0.0029273052528866472,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "Title_Master",
+      "Title_Miss",
+      "Title_Mr",
+      "Title_Mrs",
+      "Title_Rare",
+      "Title_Rev"
+    ],
+    "folds": [
+      {
+        "fold": 1,
+        "model": "Original baseline",
+        "auc": 0.8919172932330827
+      },
+      {
+        "fold": 1,
+        "model": "Previous best",
+        "auc": 0.8919172932330827
+      },
+      {
+        "fold": 1,
+        "model": "Candidate",
+        "auc": 0.8914160401002506
+      },
+      {
+        "fold": 2,
+        "model": "Original baseline",
+        "auc": 0.9190821256038647
+      },
+      {
+        "fold": 2,
+        "model": "Previous best",
+        "auc": 0.9190821256038647
+      },
+      {
+        "fold": 2,
+        "model": "Candidate",
+        "auc": 0.9139333841851005
+      },
+      {
+        "fold": 3,
+        "model": "Original baseline",
+        "auc": 0.8787821001779812
+      },
+      {
+        "fold": 3,
+        "model": "Previous best",
+        "auc": 0.8787821001779812
+      },
+      {
+        "fold": 3,
+        "model": "Candidate",
+        "auc": 0.8759852529875414
+      },
+      {
+        "fold": 4,
+        "model": "Original baseline",
+        "auc": 0.9064327485380117
+      },
+      {
+        "fold": 4,
+        "model": "Previous best",
+        "auc": 0.9064327485380117
+      },
+      {
+        "fold": 4,
+        "model": "Candidate",
+        "auc": 0.9060513602847698
+      },
+      {
+        "fold": 5,
+        "model": "Original baseline",
+        "auc": 0.9126620900076278
+      },
+      {
+        "fold": 5,
+        "model": "Previous best",
+        "auc": 0.9126620900076278
+      },
+      {
+        "fold": 5,
+        "model": "Candidate",
+        "auc": 0.9126620900076278
+      }
+    ]
+  },
+  {
+    "version": 4,
+    "feature": "SexPclass",
+    "previous_features": [],
+    "candidate_features": [
+      "SexPclass"
+    ],
+    "accepted": true,
+    "scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "previous_scores": {
+      "train_auc": 0.9630787245541345,
+      "validation_auc": 0.900065051227842,
+      "gap": 0.06301367332629249
+    },
+    "cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "previous_cv": {
+      "mean": 0.9017752715121136,
+      "std": 0.016321824128332073
+    },
+    "best_features": [
+      "SexPclass"
+    ],
+    "best_scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "best_cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "holdout_delta": 0.002845991218084265,
+    "original_delta": 0.002845991218084265,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "SexPclass_female_1",
+      "SexPclass_female_2",
+      "SexPclass_female_3",
+      "SexPclass_male_1",
+      "SexPclass_male_2",
+      "SexPclass_male_3"
+    ],
+    "folds": [
+      {
+        "fold": 1,
+        "model": "Original baseline",
+        "auc": 0.8919172932330827
+      },
+      {
+        "fold": 1,
+        "model": "Previous best",
+        "auc": 0.8919172932330827
+      },
+      {
+        "fold": 1,
+        "model": "Candidate",
+        "auc": 0.8954887218045113
+      },
+      {
+        "fold": 2,
+        "model": "Original baseline",
+        "auc": 0.9190821256038647
+      },
+      {
+        "fold": 2,
+        "model": "Previous best",
+        "auc": 0.9190821256038647
+      },
+      {
+        "fold": 2,
+        "model": "Candidate",
+        "auc": 0.9222603610475464
+      },
+      {
+        "fold": 3,
+        "model": "Original baseline",
+        "auc": 0.8787821001779812
+      },
+      {
+        "fold": 3,
+        "model": "Previous best",
+        "auc": 0.8787821001779812
+      },
+      {
+        "fold": 3,
+        "model": "Candidate",
+        "auc": 0.8817060767861683
+      },
+      {
+        "fold": 4,
+        "model": "Original baseline",
+        "auc": 0.9064327485380117
+      },
+      {
+        "fold": 4,
+        "model": "Previous best",
+        "auc": 0.9064327485380117
+      },
+      {
+        "fold": 4,
+        "model": "Candidate",
+        "auc": 0.9093567251461988
+      },
+      {
+        "fold": 5,
+        "model": "Original baseline",
+        "auc": 0.9126620900076278
+      },
+      {
+        "fold": 5,
+        "model": "Previous best",
+        "auc": 0.9126620900076278
+      },
+      {
+        "fold": 5,
+        "model": "Candidate",
+        "auc": 0.9145690312738367
+      }
+    ]
+  },
+  {
+    "version": 5,
+    "feature": "FamilyGroup",
+    "previous_features": [
+      "SexPclass"
+    ],
+    "candidate_features": [
+      "SexPclass",
+      "FamilyGroup"
+    ],
+    "accepted": false,
+    "scores": {
+      "train_auc": 0.9644343361556477,
+      "validation_auc": 0.9027484143763214,
+      "gap": 0.0616859217793263
+    },
+    "previous_scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "cv": null,
+    "previous_cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "best_features": [
+      "SexPclass"
+    ],
+    "best_scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "best_cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "holdout_delta": -0.00016262806960487541,
+    "original_delta": 0.0026833631484793896,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "SexPclass_female_1",
+      "SexPclass_female_2",
+      "SexPclass_female_3",
+      "SexPclass_male_1",
+      "SexPclass_male_2",
+      "SexPclass_male_3",
+      "FamilyGroup_Alone",
+      "FamilyGroup_Large",
+      "FamilyGroup_Small"
+    ]
+  },
+  {
+    "version": 6,
+    "feature": "TicketGroupSize",
+    "previous_features": [
+      "SexPclass"
+    ],
+    "candidate_features": [
+      "SexPclass",
+      "TicketGroupSize"
+    ],
+    "accepted": false,
+    "scores": {
+      "train_auc": 0.9646910466582598,
+      "validation_auc": 0.8999837371930396,
+      "gap": 0.06470730946522019
+    },
+    "previous_scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "cv": null,
+    "previous_cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "best_features": [
+      "SexPclass"
+    ],
+    "best_scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "best_cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "holdout_delta": -0.0029273052528866472,
+    "original_delta": -8.13140348023822e-05,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "TicketGroupSize",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "SexPclass_female_1",
+      "SexPclass_female_2",
+      "SexPclass_female_3",
+      "SexPclass_male_1",
+      "SexPclass_male_2",
+      "SexPclass_male_3"
+    ]
+  },
+  {
+    "version": 7,
+    "feature": "FarePerPerson",
+    "previous_features": [
+      "SexPclass"
+    ],
+    "candidate_features": [
+      "SexPclass",
+      "FarePerPerson"
+    ],
+    "accepted": false,
+    "scores": {
+      "train_auc": 0.9658349846874436,
+      "validation_auc": 0.9027484143763214,
+      "gap": 0.06308657031112219
+    },
+    "previous_scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "cv": null,
+    "previous_cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "best_features": [
+      "SexPclass"
+    ],
+    "best_scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "best_cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "holdout_delta": -0.00016262806960487541,
+    "original_delta": 0.0026833631484793896,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "FarePerPerson",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "SexPclass_female_1",
+      "SexPclass_female_2",
+      "SexPclass_female_3",
+      "SexPclass_male_1",
+      "SexPclass_male_2",
+      "SexPclass_male_3"
+    ]
+  },
+  {
+    "version": 8,
+    "feature": "IsChild",
+    "previous_features": [
+      "SexPclass"
+    ],
+    "candidate_features": [
+      "SexPclass",
+      "IsChild"
+    ],
+    "accepted": false,
+    "scores": {
+      "train_auc": 0.9642181588902901,
+      "validation_auc": 0.9031549845503334,
+      "gap": 0.06106317433995667
+    },
+    "previous_scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "cv": {
+      "mean": 0.9022510987613963,
+      "std": 0.017383094410230584
+    },
+    "previous_cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "best_features": [
+      "SexPclass"
+    ],
+    "best_scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "best_cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "holdout_delta": 0.0002439421044071466,
+    "original_delta": 0.0030899333224914116,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "IsChild",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "SexPclass_female_1",
+      "SexPclass_female_2",
+      "SexPclass_female_3",
+      "SexPclass_male_1",
+      "SexPclass_male_2",
+      "SexPclass_male_3"
+    ],
+    "folds": [
+      {
+        "fold": 1,
+        "model": "Original baseline",
+        "auc": 0.8919172932330827
+      },
+      {
+        "fold": 1,
+        "model": "Previous best",
+        "auc": 0.8954887218045113
+      },
+      {
+        "fold": 1,
+        "model": "Candidate",
+        "auc": 0.8944235588972432
+      },
+      {
+        "fold": 2,
+        "model": "Original baseline",
+        "auc": 0.9190821256038647
+      },
+      {
+        "fold": 2,
+        "model": "Previous best",
+        "auc": 0.9222603610475464
+      },
+      {
+        "fold": 2,
+        "model": "Candidate",
+        "auc": 0.919209255021612
+      },
+      {
+        "fold": 3,
+        "model": "Original baseline",
+        "auc": 0.8787821001779812
+      },
+      {
+        "fold": 3,
+        "model": "Previous best",
+        "auc": 0.8817060767861683
+      },
+      {
+        "fold": 3,
+        "model": "Candidate",
+        "auc": 0.8758581235697941
+      },
+      {
+        "fold": 4,
+        "model": "Original baseline",
+        "auc": 0.9064327485380117
+      },
+      {
+        "fold": 4,
+        "model": "Previous best",
+        "auc": 0.9093567251461988
+      },
+      {
+        "fold": 4,
+        "model": "Candidate",
+        "auc": 0.9082125603864734
+      },
+      {
+        "fold": 5,
+        "model": "Original baseline",
+        "auc": 0.9126620900076278
+      },
+      {
+        "fold": 5,
+        "model": "Previous best",
+        "auc": 0.9145690312738367
+      },
+      {
+        "fold": 5,
+        "model": "Candidate",
+        "auc": 0.9135519959318587
+      }
+    ]
+  },
+  {
+    "version": 9,
+    "feature": "CabinDeck",
+    "previous_features": [
+      "SexPclass"
+    ],
+    "candidate_features": [
+      "SexPclass",
+      "CabinDeck"
+    ],
+    "accepted": false,
+    "scores": {
+      "train_auc": 0.964010989010989,
+      "validation_auc": 0.9047812652463815,
+      "gap": 0.059229723764607556
+    },
+    "previous_scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "cv": {
+      "mean": 0.902822999527805,
+      "std": 0.013704343685384496
+    },
+    "previous_cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "best_features": [
+      "SexPclass"
+    ],
+    "best_scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "best_cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "holdout_delta": 0.0018702228004552346,
+    "original_delta": 0.0047162140185395,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "SexPclass_female_1",
+      "SexPclass_female_2",
+      "SexPclass_female_3",
+      "SexPclass_male_1",
+      "SexPclass_male_2",
+      "SexPclass_male_3",
+      "CabinDeck_A",
+      "CabinDeck_B",
+      "CabinDeck_C",
+      "CabinDeck_D",
+      "CabinDeck_E",
+      "CabinDeck_F",
+      "CabinDeck_G",
+      "CabinDeck_T",
+      "CabinDeck_Unknown"
+    ],
+    "folds": [
+      {
+        "fold": 1,
+        "model": "Original baseline",
+        "auc": 0.8919172932330827
+      },
+      {
+        "fold": 1,
+        "model": "Previous best",
+        "auc": 0.8954887218045113
+      },
+      {
+        "fold": 1,
+        "model": "Candidate",
+        "auc": 0.8944862155388471
+      },
+      {
+        "fold": 2,
+        "model": "Original baseline",
+        "auc": 0.9190821256038647
+      },
+      {
+        "fold": 2,
+        "model": "Previous best",
+        "auc": 0.9222603610475464
+      },
+      {
+        "fold": 2,
+        "model": "Candidate",
+        "auc": 0.9185736079328757
+      },
+      {
+        "fold": 3,
+        "model": "Original baseline",
+        "auc": 0.8787821001779812
+      },
+      {
+        "fold": 3,
+        "model": "Previous best",
+        "auc": 0.8817060767861683
+      },
+      {
+        "fold": 3,
+        "model": "Candidate",
+        "auc": 0.8841215357233663
+      },
+      {
+        "fold": 4,
+        "model": "Original baseline",
+        "auc": 0.9064327485380117
+      },
+      {
+        "fold": 4,
+        "model": "Previous best",
+        "auc": 0.9093567251461988
+      },
+      {
+        "fold": 4,
+        "model": "Candidate",
+        "auc": 0.9052885837782864
+      },
+      {
+        "fold": 5,
+        "model": "Original baseline",
+        "auc": 0.9126620900076278
+      },
+      {
+        "fold": 5,
+        "model": "Previous best",
+        "auc": 0.9145690312738367
+      },
+      {
+        "fold": 5,
+        "model": "Candidate",
+        "auc": 0.9116450546656496
+      }
+    ]
+  }
+]

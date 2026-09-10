@@ -1,0 +1,636 @@
+
+### CELL 1 [markdown] execution=
+# 1. 데이터 수집 및 확인
+
+### CELL 2 [code] execution=24
+import numpy as np
+import pandas as pd
+from IPython.display import display
+from common.utils import train_test_split_by_target
+from common.modeling import Modeling
+from common.preprocessing import TitanicPreprocessor
+
+
+train = pd.read_csv("train.csv")
+test = pd.read_csv("test.csv")
+submission = pd.read_csv("submission.csv")
+
+### CELL 3 [code] execution=25
+print("train shape:", train.shape)
+display(train.head())
+
+print("test shape:", test.shape)
+display(test.head())
+OUTPUT:
+train shape: (916, 12)
+
+OUTPUT:
+   passengerid  survived  pclass  \
+0            0         0       2   
+1            1         0       3   
+2            2         1       1   
+3            3         1       3   
+4            4         0       2   
+
+                                                name  gender   age  sibsp  \
+0                     Wheeler, Mr. Edwin Frederick""    male   NaN      0   
+1                                 Henry, Miss. Delia  female   NaN      0   
+2  Hays, Mrs. Charles Melville (Clara Jennings Gr...  female  52.0      1   
+3       Andersson, Mr. August Edvard ("Wennerstrom")    male  27.0      0   
+4                                  Hold, Mr. Stephen    male  44.0      1   
+
+   parch         ticket     fare cabin embarked  
+0      0  SC/PARIS 2159  12.8750   NaN        S  
+1      0         382649   7.7500   NaN        Q  
+2      1          12749  93.5000   B69        S  
+3      0         350043   7.7958   NaN        S  
+4      0          26707  26.0000   NaN        S  
+OUTPUT:
+test shape: (393, 11)
+
+OUTPUT:
+   passengerid  pclass                                        name  gender  \
+0          916       3                 McGowan, Miss. Anna "Annie"  female   
+1          917       2                         Pinsky, Mrs. (Rosa)  female   
+2          918       3           McCarthy, Miss. Catherine Katie""  female   
+3          919       3      Franklin, Mr. Charles (Charles Fardon)    male   
+4          920       1  Wick, Mrs. George Dennick (Mary Hitchcock)  female   
+
+    age  sibsp  parch              ticket      fare cabin embarked  
+0  15.0      0      0              330923    8.0292   NaN        Q  
+1  32.0      0      0              234604   13.0000   NaN        S  
+2   NaN      0      0              383123    7.7500   NaN        Q  
+3   NaN      0      0  SOTON/O.Q. 3101314    7.2500   NaN        S  
+4  45.0      1      1               36928  164.8667   NaN        S  
+
+### CELL 4 [markdown] execution=
+# 2. 메타 정보 확인
+
+### CELL 5 [code] execution=26
+# train 데이터 기본 정보
+print(train.shape)
+print(train.columns.tolist())
+train.info()
+print(train.dtypes)
+print("결측치 개수")
+print(train.isna().sum())
+print("결측치 비율")
+print(train.isna().mean())
+print("고유값 개수")
+print(train.nunique())
+display(train.describe(include="all"))
+OUTPUT:
+(916, 12)
+['passengerid', 'survived', 'pclass', 'name', 'gender', 'age', 'sibsp', 'parch', 'ticket', 'fare', 'cabin', 'embarked']
+<class 'pandas.DataFrame'>
+RangeIndex: 916 entries, 0 to 915
+Data columns (total 12 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   passengerid  916 non-null    int64  
+ 1   survived     916 non-null    int64  
+ 2   pclass       916 non-null    int64  
+ 3   name         916 non-null    str    
+ 4   gender       916 non-null    str    
+ 5   age          736 non-null    float64
+ 6   sibsp        916 non-null    int64  
+ 7   parch        916 non-null    int64  
+ 8   ticket       916 non-null    str    
+ 9   fare         916 non-null    float64
+ 10  cabin        198 non-null    str    
+ 11  embarked     915 non-null    str    
+dtypes: float64(2), int64(5), str(5)
+memory usage: 86.0 KB
+passengerid      int64
+survived         int64
+pclass           int64
+name               str
+gender             str
+age            float64
+sibsp            int64
+parch            int64
+ticket             str
+fare           float64
+cabin              str
+embarked           str
+dtype: object
+결측치 개수
+passengerid      0
+survived         0
+pclass           0
+name             0
+gender           0
+age            180
+sibsp            0
+parch            0
+ticket           0
+fare             0
+cabin          718
+embarked         1
+dtype: int64
+결측치 비율
+passengerid    0.000000
+survived       0.000000
+pclass         0.000000
+name           0.000000
+gender         0.000000
+age            0.196507
+sibsp          0.000000
+parch          0.000000
+ticket         0.000000
+fare           0.000000
+cabin          0.783843
+embarked       0.001092
+dtype: float64
+고유값 개수
+passengerid    916
+survived         2
+pclass           3
+name           915
+gender           2
+age             92
+sibsp            7
+parch            8
+ticket         703
+fare           251
+cabin          146
+embarked         3
+dtype: int64
+
+OUTPUT:
+        passengerid    survived      pclass                  name gender  \
+count    916.000000  916.000000  916.000000                   916    916   
+unique          NaN         NaN         NaN                   915      2   
+top             NaN         NaN         NaN  Connolly, Miss. Kate   male   
+freq            NaN         NaN         NaN                     2    589   
+mean     457.500000    0.377729    2.292576                   NaN    NaN   
+std      264.570721    0.485084    0.838675                   NaN    NaN   
+min        0.000000    0.000000    1.000000                   NaN    NaN   
+25%      228.750000    0.000000    2.000000                   NaN    NaN   
+50%      457.500000    0.000000    3.000000                   NaN    NaN   
+75%      686.250000    1.000000    3.000000                   NaN    NaN   
+max      915.000000    1.000000    3.000000                   NaN    NaN   
+
+               age       sibsp       parch    ticket        fare  \
+count   736.000000  916.000000  916.000000       916  916.000000   
+unique         NaN         NaN         NaN       703         NaN   
+top            NaN         NaN         NaN  CA. 2343         NaN   
+freq           NaN         NaN         NaN         7         NaN   
+mean     29.698370    0.507642    0.361354       NaN   32.402710   
+std      14.185627    1.044866    0.828054       NaN   50.506411   
+min       0.170000    0.000000    0.000000       NaN    0.000000   
+25%      21.000000    0.000000    0.000000       NaN    7.895800   
+50%      28.000000    0.000000    0.000000       NaN   14.458300   
+75%      38.000000    1.000000    0.000000       NaN   30.017700   
+max      80.000000    8.000000    9.000000       NaN  512.329200   
+
+                  cabin embarked  
+count               198      915  
+unique              146        3  
+top     B57 B59 B63 B66        S  
+freq                  4      645  
+mean                NaN      NaN  
+std                 NaN      NaN  
+min                 NaN      NaN  
+25%                 NaN      NaN  
+50%                 NaN      NaN  
+75%                 NaN      NaN  
+max                 NaN      NaN  
+
+### CELL 6 [code] execution=27
+# test 데이터 기본 정보
+print(test.shape)
+print(test.columns.tolist())
+test.info()
+print(test.dtypes)
+print("결측치 개수")
+print(test.isna().sum())
+print("결측치 비율")
+print(test.isna().mean())
+print("고유값 개수")
+print(test.nunique())
+display(test.describe(include="all"))
+OUTPUT:
+(393, 11)
+['passengerid', 'pclass', 'name', 'gender', 'age', 'sibsp', 'parch', 'ticket', 'fare', 'cabin', 'embarked']
+<class 'pandas.DataFrame'>
+RangeIndex: 393 entries, 0 to 392
+Data columns (total 11 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   passengerid  393 non-null    int64  
+ 1   pclass       393 non-null    int64  
+ 2   name         393 non-null    str    
+ 3   gender       393 non-null    str    
+ 4   age          310 non-null    float64
+ 5   sibsp        393 non-null    int64  
+ 6   parch        393 non-null    int64  
+ 7   ticket       393 non-null    str    
+ 8   fare         392 non-null    float64
+ 9   cabin        97 non-null     str    
+ 10  embarked     392 non-null    str    
+dtypes: float64(2), int64(4), str(5)
+memory usage: 33.9 KB
+passengerid      int64
+pclass           int64
+name               str
+gender             str
+age            float64
+sibsp            int64
+parch            int64
+ticket             str
+fare           float64
+cabin              str
+embarked           str
+dtype: object
+결측치 개수
+passengerid      0
+pclass           0
+name             0
+gender           0
+age             83
+sibsp            0
+parch            0
+ticket           0
+fare             1
+cabin          296
+embarked         1
+dtype: int64
+결측치 비율
+passengerid    0.000000
+pclass         0.000000
+name           0.000000
+gender         0.000000
+age            0.211196
+sibsp          0.000000
+parch          0.000000
+ticket         0.000000
+fare           0.002545
+cabin          0.753181
+embarked       0.002545
+dtype: float64
+고유값 개수
+passengerid    393
+pclass           3
+name           393
+gender           2
+age             75
+sibsp            7
+parch            7
+ticket         345
+fare           168
+cabin           86
+embarked         3
+dtype: int64
+
+OUTPUT:
+        passengerid      pclass                         name gender  \
+count    393.000000  393.000000                          393    393   
+unique          NaN         NaN                          393      2   
+top             NaN         NaN  McGowan, Miss. Anna "Annie"   male   
+freq            NaN         NaN                            1    254   
+mean    1112.000000    2.300254                          NaN    NaN   
+std      113.593574    0.836919                          NaN    NaN   
+min      916.000000    1.000000                          NaN    NaN   
+25%     1014.000000    2.000000                          NaN    NaN   
+50%     1112.000000    3.000000                          NaN    NaN   
+75%     1210.000000    3.000000                          NaN    NaN   
+max     1308.000000    3.000000                          NaN    NaN   
+
+               age       sibsp       parch  ticket        fare cabin embarked  
+count   310.000000  393.000000  393.000000     393  392.000000    97      392  
+unique         NaN         NaN         NaN     345         NaN    86        3  
+top            NaN         NaN         NaN  220845         NaN    F4        S  
+freq           NaN         NaN         NaN       4         NaN     4      269  
+mean     30.315065    0.478372    0.440204     NaN   35.381643   NaN      NaN  
+std      14.955056    1.035180    0.946051     NaN   54.582654   NaN      NaN  
+min       0.420000    0.000000    0.000000     NaN    0.000000   NaN      NaN  
+25%      21.000000    0.000000    0.000000     NaN    7.895800   NaN      NaN  
+50%      28.000000    0.000000    0.000000     NaN   14.281250   NaN      NaN  
+75%      40.000000    1.000000    1.000000     NaN   35.125000   NaN      NaN  
+max      67.000000    8.000000    9.000000     NaN  512.329200   NaN      NaN  
+
+### CELL 7 [code] execution=28
+print("train 컬럼")
+print(train.columns.tolist())
+print("test 컬럼")
+print(test.columns.tolist())
+train_only = set(train.columns) - set(test.columns)
+test_only = set(test.columns) - set(train.columns)
+print("train에만 있는 컬럼:", train_only)
+print("test에만 있는 컬럼:", test_only)
+OUTPUT:
+train 컬럼
+['passengerid', 'survived', 'pclass', 'name', 'gender', 'age', 'sibsp', 'parch', 'ticket', 'fare', 'cabin', 'embarked']
+test 컬럼
+['passengerid', 'pclass', 'name', 'gender', 'age', 'sibsp', 'parch', 'ticket', 'fare', 'cabin', 'embarked']
+train에만 있는 컬럼: {'survived'}
+test에만 있는 컬럼: set()
+
+
+### CELL 8 [markdown] execution=
+# 3. Target 정의
+train에만 있는 실제 컬럼과 제출 템플릿을 교차 확인 !
+passengerid : 행 식별자이므로 피처에서 제외
+test.csv : target 없는 거 정상
+
+### CELL 9 [code] execution=
+assert len(train_only) == 1 and not test_only # 컬럼 차이 검증
+
+assert train_only == {"survived"}
+target_col = "survived"
+assert target_col in submission.columns
+id_col = "passengerid"
+assert id_col in submission.columns and id_col in test.columns
+assert train[id_col].is_unique and test[id_col].is_unique
+assert train[id_col].notna().all() and test[id_col].notna().all()
+assert set(train[id_col]).isdisjoint(test[id_col])
+
+X = train.drop(columns=[target_col, id_col])
+y = train[target_col]
+X_test_raw = test.drop(columns=id_col)
+assert X.columns.equals(X_test_raw.columns)
+assert y.notna().all()
+print('target:', target_col, 'ID:', id_col, 'X/y:', X.shape, y.shape)
+OUTPUT:
+target: survived ID: passengerid X/y: (916, 10) (916,)
+
+
+### CELL 10 [markdown] execution=
+# 4. Target 데이터 분석
+survived : 저장 dtype은 정수형, 의미는 생존 여부를 나타내는 범주형 target
+
+그래서 이진 분류 - stratify 사용
+
+
+EDA와 전처리보다 먼저 학습/validation을 분리 !!
+
+공통 split 함수는 seed 42, stratify, 기본 validation 25%를 사용
+
+### CELL 11 [code] execution=30
+assert set(y.unique()) == {0, 1}
+print('target dtype:', y.dtype, '문제 유형: 이진 분류')
+print(pd.DataFrame({'count': y.value_counts(), 'ratio': y.value_counts(normalize=True)}))
+train_part, valid_part = train_test_split_by_target(train, target_name=target_col)
+X_tr_raw = train_part.drop(columns=[id_col, target_col])
+y_tr = train_part[target_col]
+X_valid_raw = valid_part.drop(columns=[id_col, target_col])
+y_valid = valid_part[target_col]
+assert set(train_part[id_col]).isdisjoint(valid_part[id_col])
+print('학습/validation:', X_tr_raw.shape, X_valid_raw.shape)
+print('validation 비율:', y_valid.value_counts(normalize=True).to_dict())
+OUTPUT:
+target dtype: int64 문제 유형: 이진 분류
+          count     ratio
+survived                 
+0           570  0.622271
+1           346  0.377729
+학습/validation: (687, 10) (229, 10)
+validation 비율: {0: 0.6244541484716157, 1: 0.37554585152838427}
+
+
+### CELL 12 [markdown] execution=
+# 5. 핵심 EDA 확인
+상세 그래프와 변수 조합 분석 ㅣ titanic_eda.ipynb에서 확인 ㄱㄱ
+학습 부분에서는 여성 생존율 85.4%, 남성 12.3%, 1등급 53.3%, 3등급 29.8%로 차이 존재
+성별·등급은 유지하고 가족 규모를 피처로 사용
+ 원본 수치형 사이 절대 상관 0.8 이상인 쌍은 없음
+
+### CELL 13 [code] execution=31
+display(train_part.groupby("gender")[target_col].agg(["size", "mean"]))
+display(train_part.groupby("pclass")[target_col].agg(["size", "mean"]))
+OUTPUT:
+        size      mean
+gender                
+female   240  0.854167
+male     447  0.123043
+OUTPUT:
+        size      mean
+pclass                
+1        165  0.533333
+2        159  0.402516
+3        363  0.297521
+
+### CELL 14 [markdown] execution=
+# 6. 데이터 전처리
+## 6-1. 결측치
+cabin :  20%를 크게 넘어 원본 객실번호를 제외하자
+age : 생존과 연관될 수 있는 기본 변수이므로 유지하고 성별·등급별 중앙값으로 치환
+그룹 통계가 없으면 학습 전체 중앙값을 씀
+나머지 수치형은 중앙값, 범주형은 최빈값
+validation/test에는 transform만 꼭 해야 해
+최종 재학습 때는 전체 train에서 새 전처리 객체를 fit ! 
+
+학습 부분 cabin 결측은 543/687행(79.0%)입니다. 
+알려진 개별 객실번호도 표본이 작은 그룹이 많아 원본 번호는 첫 baseline에서 제외  . . 객실 정보가 무의미하다고 단정하는 것은 아님
+
+### CELL 15 [code] execution=9
+prep = TitanicPreprocessor().fit_missing(X_tr_raw)
+print('학습 부분 결측 비율:', prep.missing_ratio_.sort_values(ascending=False).to_string())
+print('제외:', prep.drop_missing_)
+print('age 그룹 중앙값:', prep.age_groups_.to_string())
+X_tr_clean = prep.transform_missing(X_tr_raw)
+X_valid_clean = prep.transform_missing(X_valid_raw)
+assert not X_tr_clean.isna().any().any() and not X_valid_clean.isna().any().any()
+OUTPUT:
+학습 부분 결측 비율: cabin       0.790393
+age         0.183406
+name        0.000000
+pclass      0.000000
+sibsp       0.000000
+gender      0.000000
+parch       0.000000
+ticket      0.000000
+fare        0.000000
+embarked    0.000000
+제외: ['cabin']
+age 그룹 중앙값: gender  pclass
+female  1         35.0
+        2         27.0
+        3         22.0
+male    1         42.0
+        2         30.0
+        3         24.0
+
+
+### CELL 16 [markdown] execution=
+## 6-2. Feature 생성
+기존 코드에서 `FamilySize = sibsp + parch + 1`과 `IsAlone`만 재사용 ㄱㄱ
+
+### CELL 17 [code] execution=32
+X_tr_features = prep.make_features(X_tr_clean)
+X_valid_features = prep.make_features(X_valid_clean)
+print(X_tr_features[['sibsp', 'parch', 'FamilySize', 'IsAlone']].head().to_string())
+OUTPUT:
+     sibsp  parch  FamilySize  IsAlone
+595      0      1           2        0
+148      0      0           1        1
+347      1      1           3        0
+731      0      2           3        0
+457      0      0           1        1
+
+
+### CELL 18 [markdown] execution=
+## 6-3. 중복 제거
+기존 코드의 `family_size`와 `FamilySize`는 같은 식이므로 `FamilySize`만 생성합니다.
+이름/티켓 원문은 고유값이 많아 단순 baseline의 원핫 차원을 늘리므로 제외합니다.
+완전 중복과 ID 제외 중복을 점검합니다. 전처리 후 같은 피처를 가진 서로 다른 승객은 중복 관측으로 단정하지 않고 유지합니다.
+원본 완전 중복이 발견되면 분리 전에 처리해야 하므로 실행을 중단해 검토하게 합니다.
+
+### CELL 19 [code] execution=11
+raw_duplicates = train.duplicated().sum()
+identity_free_duplicates = train.drop(columns=id_col).duplicated().sum()
+print('원본 완전 중복:', raw_duplicates, 'ID 제외 중복:', identity_free_duplicates)
+assert raw_duplicates == 0 and identity_free_duplicates == 0, '원본 중복을 검토한 뒤 split을 다시 수행하세요.'
+X_tr_features = prep.select_features(X_tr_features)
+X_valid_features = prep.select_features(X_valid_features)
+print('피처가 같은 별도 승객 수(유지):', X_tr_features.duplicated().sum())
+print('사용 피처:', X_tr_features.columns.tolist())
+OUTPUT:
+원본 완전 중복: 0 ID 제외 중복: 0
+피처가 같은 별도 승객 수(유지): 80
+사용 피처: ['pclass', 'gender', 'age', 'sibsp', 'parch', 'fare', 'embarked', 'FamilySize', 'IsAlone']
+
+
+### CELL 20 [markdown] execution=
+## 6-4. 데이터 인코딩
+세 모델을 동일한 수치형 피처로 비교하도록 범주형 `gender`, `embarked`를 One-Hot Encoding합니다.
+encoder.fit은 학습 부분에만 호출합니다. validation/test의 미관측 범주는 handle_unknown='ignore'로 처리합니다.
+
+### CELL 21 [code] execution=12
+prep.fit_encoding(X_tr_features)
+X_tr_encoded = prep.transform_encoding(X_tr_features)
+X_valid_encoded = prep.transform_encoding(X_valid_features)
+print('범주형:', prep.cat_cols_, '인코딩 후:', X_tr_encoded.shape, X_valid_encoded.shape)
+assert X_tr_encoded.columns.equals(X_valid_encoded.columns)
+OUTPUT:
+범주형: ['gender', 'embarked'] 인코딩 후: (687, 12) (229, 12)
+
+
+### CELL 22 [markdown] execution=
+## 6-5. 데이터 스케일링
+기존 모듈의 XGBoost, LightGBM, CatBoost는 모두 트리 기반이므로 스케일링은 생략합니다.
+
+### CELL 23 [code] execution=13
+X_tr_model = X_tr_encoded
+X_valid_model = X_valid_encoded
+assert np.isfinite(X_tr_model.to_numpy()).all()
+assert np.isfinite(X_valid_model.to_numpy()).all()
+assert X_tr_model.index.equals(y_tr.index)
+
+### CELL 24 [markdown] execution=
+# 7. 모델 학습
+
+
+### CELL 25 [code] execution=14
+modeling = Modeling(X_tr_model.copy(), y_tr, cat_cols=[])
+modeling.fit()
+print('XGBoost / LightGBM / CatBoost 학습 완료')
+OUTPUT:
+XGBoost / LightGBM / CatBoost 학습 완료
+
+
+### CELL 26 [markdown] execution=
+# 8. Evaluation - AUC
+
+
+### CELL 27 [code] execution=15
+auc_result = modeling.evaluate(y_valid, X_valid_model.copy())
+print(auc_result.to_string(index=False))
+best = modeling.get_best_model()
+print('선택:', best['model_name'], 'Validation AUC:', best['test_score'])
+OUTPUT:
+             model  train_auc  validation_auc
+CatBoostClassifier   0.963079        0.900065
+    LGBMClassifier   0.994433        0.894088
+     XGBClassifier   0.996897        0.888396
+선택: CatBoostClassifier Validation AUC: 0.900065051227842
+
+
+### CELL 28 [markdown] execution=
+# 9. 전체 train 데이터로 최종 학습
+선택된 모델의 클래스와 파라미터로 새 객체를 생성하여 전체 train으로 재학습
+
+### CELL 29 [code] execution=16
+final_prep = TitanicPreprocessor()
+X_full_model = final_prep.fit_transform(X)
+final_model = type(best['model'])(**best['hpo'])
+final_model.fit(X_full_model, y)
+print('전체 train 최종 학습:', X_full_model.shape, final_model.__class__.__name__)
+OUTPUT:
+전체 train 최종 학습: (916, 12) CatBoostClassifier
+
+
+### CELL 30 [markdown] execution=
+# 10. test 예측
+먼저 원본 submission 템플릿의 컬럼/ID/행 순서를 확인합니다.
+사용자가 명시한 평가 기준 AUC와 템플릿의 실수형 0.5를 근거로 생존 확률을 제출합니다.
+양성 클래스의 위치는 classes_에서 확인합니다. test 정답을 만들거나 성능 평가에 사용하지 않습니다.
+
+### CELL 31 [code] execution=17
+print('submission:', submission.shape, submission.columns.tolist())
+print(submission.head().to_string(index=False))
+assert submission.columns.tolist() == [id_col, target_col]
+assert len(submission) == len(test)
+assert submission[id_col].is_unique and submission[id_col].notna().all()
+assert set(submission[id_col]) == set(test[id_col])
+print('ID:', id_col, 'prediction:', target_col)
+print('test와 ID 순서 일치:', submission[id_col].equals(test[id_col]))
+assert pd.api.types.is_float_dtype(submission[target_col])
+assert submission[target_col].between(0, 1).all()
+X_test_model = final_prep.transform(X_test_raw)
+assert X_full_model.columns.equals(X_test_model.columns)
+positive_index = list(final_model.classes_).index(1)
+predictions = final_model.predict_proba(X_test_model)[:, positive_index]
+assert np.isfinite(predictions).all() and ((predictions >= 0) & (predictions <= 1)).all()
+OUTPUT:
+submission: (393, 2) ['passengerid', 'survived']
+ passengerid  survived
+         916       0.5
+         917       0.5
+         918       0.5
+         919       0.5
+         920       0.5
+ID: passengerid prediction: survived
+test와 ID 순서 일치: True
+
+
+### CELL 32 [markdown] execution=
+# 11. submission_result_1.csv 생성
+원본 템플릿을 복사하여 예측 컬럼만 바꿉니다. ID로 매핑하므로 템플릿의 원래 행 순서를 유지합니다.
+index=False로 저장한 실제 파일을 다시 읽어 검증합니다.
+
+### CELL 33 [code] execution=18
+result = submission.copy(deep=True)
+by_id = pd.Series(predictions, index=test[id_col].to_numpy())
+result[target_col] = result[id_col].map(by_id)
+assert result[target_col].notna().all()
+result.to_csv("submission_result_1.csv", index=False)
+saved = pd.read_csv("submission_result_1.csv")
+checks = {
+    # 바로 위 read_csv가 성공하면 파일 존재도 확인됩니다.
+    'test 행 수 일치': len(saved) == len(test),
+    '원본 shape 유지': saved.shape == submission.shape,
+    '컬럼명/순서 유지': saved.columns.equals(submission.columns),
+    'ID 값/순서 유지': saved[id_col].equals(submission[id_col]),
+    'NaN 없음': saved[target_col].notna().all(),
+    '확률 실수형': pd.api.types.is_float_dtype(saved[target_col]),
+    '확률 0~1 범위': saved[target_col].between(0, 1).all(),
+}
+assert all(checks.values()), checks
+pd.testing.assert_frame_equal(saved.drop(columns=target_col), submission.drop(columns=target_col))
+np.testing.assert_allclose(saved[target_col], by_id.loc[submission[id_col]], rtol=1e-12, atol=1e-15)
+print('검증:', checks)
+print('최종 shape:', saved.shape)
+print(saved.head().to_string(index=False))
+print('저장: submission_result_1.csv')
+OUTPUT:
+검증: {'test 행 수 일치': True, '원본 shape 유지': True, '컬럼명/순서 유지': True, 'ID 값/순서 유지': True, 'NaN 없음': np.True_, '확률 실수형': True, '확률 0~1 범위': np.True_}
+최종 shape: (393, 2)
+ passengerid  survived
+         916  0.832588
+         917  0.906221
+         918  0.879633
+         919  0.075956
+         920  0.962691
+저장: submission_result_1.csv

@@ -1,0 +1,1081 @@
+
+### CELL 1 [markdown] execution=
+# 3. model_feature_add
+
+`2. model.ipynb`의 Modeling, Cross Validation, SMOTE 구조를 유지하고 요청한 다섯 가지 Feature만 추가한 실험입니다.
+
+### CELL 2 [markdown] execution=
+# 1. Load Dataset
+
+### CELL 3 [code] execution=39
+import importlib
+import numpy as np
+import pandas as pd
+import easydict
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import OrdinalEncoder
+from imblearn.over_sampling import SMOTE
+
+# modeling.py를 수정한 뒤에도 이전 클래스가 남지 않도록 모듈을 다시 불러옵니다.
+import common.modeling
+importlib.reload(common.modeling)
+from common.modeling import Modeling
+from common.evaluations import get_auc_score
+
+### CELL 4 [code] execution=40
+# 2번 모델과 같은 데이터 경로를 사용합니다.
+args = easydict.EasyDict()
+args.train_file = "./data/train.csv"
+args.test_file = "./data/test.csv"
+args.submission_file = "./data/submission.csv"
+
+train = pd.read_csv(args.train_file)
+test = pd.read_csv(args.test_file)
+submission = pd.read_csv(args.submission_file)
+
+print("train shape:", train.shape)
+print("test shape:", test.shape)
+print("submission shape:", submission.shape)
+OUTPUT:
+train shape: (916, 12)
+test shape: (393, 11)
+submission shape: (393, 2)
+
+
+### CELL 5 [markdown] execution=
+# 2. Target 확인
+
+### CELL 6 [code] execution=41
+# 각 class의 비율을 확인합니다.
+train["survived"].value_counts() / train.shape[0]
+OUTPUT:
+survived
+0    0.622271
+1    0.377729
+Name: count, dtype: float64
+
+### CELL 7 [markdown] execution=
+# 3. Data Preprocessing
+
+### CELL 8 [code] execution=42
+# 기존 모델과 동일하게 학습 데이터의 중복 행만 제거합니다.
+print(f"before: {train.shape}")
+train.drop_duplicates(inplace=True)
+print(f"after: {train.shape}")
+OUTPUT:
+before: (916, 12)
+after: (916, 12)
+
+
+### CELL 9 [code] execution=43
+# 기존 모델과 동일하게 train의 평균 또는 최빈값으로 결측치를 채웁니다.
+print(f"before: {train.isnull().sum().sum()} / {test.isnull().sum().sum()}")
+
+for frame in [train, test]:
+    null_count = frame.isnull().sum()
+    null_cols = null_count[null_count > 0].index
+
+    for col in null_cols:
+        try:
+            frame[col] = frame[col].fillna(train[col].mean())
+        except Exception:
+            frame[col] = frame[col].fillna(train[col].mode().values[0])
+
+print(f"after: {train.isnull().sum().sum()} / {test.isnull().sum().sum()}")
+OUTPUT:
+before: 899 / 381
+after: 0 / 0
+
+
+### CELL 10 [markdown] execution=
+# 4. Feature Engineering
+
+원본 `name`을 제거하기 전에 FamilySize, IsAlone, Title, Occupation, IsNoble을 만듭니다.
+
+### CELL 11 [markdown] execution=
+## 실제 이름 형식과 Title 확인
+
+### CELL 12 [code] execution=44
+# 실제 이름이 'Lastname, Title. Firstname' 형태인지 먼저 확인합니다.
+print(train[["name"]].head(10))
+
+# 쉼표 뒤부터 마침표 앞까지의 문자열을 Title로 미리 추출합니다.
+train_title_preview = (
+    train["name"]
+    .str.extract(r",\s*([^.]*)\.")[0]
+    .str.strip()
+)
+test_title_preview = (
+    test["name"]
+    .str.extract(r",\s*([^.]*)\.")[0]
+    .str.strip()
+)
+
+print("\nTrain Title 종류와 개수")
+print(train_title_preview.value_counts())
+print("\nTest Title 종류와 개수")
+print(test_title_preview.value_counts())
+OUTPUT:
+                                                name
+0                     Wheeler, Mr. Edwin Frederick""
+1                                 Henry, Miss. Delia
+2  Hays, Mrs. Charles Melville (Clara Jennings Gr...
+3       Andersson, Mr. August Edvard ("Wennerstrom")
+4                                  Hold, Mr. Stephen
+5           Rosblom, Mrs. Viktor (Helena Wilhelmina)
+6                                Novel, Mr. Mansouer
+7           Kelly, Miss. Anna Katherine "Annie Kate"
+8                         de Brito, Mr. Jose Joaquim
+9                               Petersen, Mr. Marius
+
+Train Title 종류와 개수
+0
+Mr              528
+Miss            185
+Mrs             138
+Master           42
+Rev               6
+Dr                5
+Col               3
+Major             2
+Don               1
+Ms                1
+Jonkheer          1
+Mlle              1
+the Countess      1
+Capt              1
+Sir               1
+Name: count, dtype: int64
+
+Test Title 종류와 개수
+0
+Mr        229
+Miss       75
+Mrs        59
+Master     19
+Dr          3
+Rev         2
+Dona        1
+Lady        1
+Mme         1
+Mlle        1
+Col         1
+Ms          1
+Name: count, dtype: int64
+
+
+### CELL 13 [markdown] execution=
+## Feature 생성 함수
+
+### CELL 14 [code] execution=45
+# Train에서 10명 이상인 자주 등장하는 Title만 그대로 유지합니다.
+# 희귀한 Title은 모델이 너무 작은 집단을 외우지 않도록 Rare로 묶습니다.
+train_title_counts = train_title_preview.value_counts()
+common_titles = train_title_counts[train_title_counts >= 10].index.tolist()
+print("그대로 유지할 Title:", common_titles)
+
+
+def add_features(data):
+    """Train과 Test에 요청한 다섯 가지 Feature를 같은 방법으로 추가합니다."""
+
+    # 원본 데이터를 직접 바꾸지 않도록 복사합니다.
+    data = data.copy()
+
+    # sibsp는 함께 탑승한 형제/배우자 수입니다.
+    # parch는 함께 탑승한 부모/자녀 수입니다.
+    # +1은 승객 본인을 의미합니다.
+    data["FamilySize"] = (
+        data["sibsp"]
+        + data["parch"]
+        + 1
+    )
+
+    # 가족 수가 1명이면 혼자 탑승한 승객이므로 1로 표시합니다.
+    data["IsAlone"] = (
+        data["FamilySize"] == 1
+    ).astype(int)
+
+    # 이름의 쉼표 뒤부터 마침표 앞까지를 원래 Title로 추출합니다.
+    original_title = (
+        data["name"]
+        .str.extract(r",\s*([^.]*)\.")[0]
+        .str.strip()
+    )
+
+    # 직업이나 사회적 역할을 나타내는 Title만 간단히 구분합니다.
+    # Mr, Mrs, Miss, Master 등 일반 호칭은 Other로 둡니다.
+    data["Occupation"] = "Other"
+    data.loc[original_title == "Dr", "Occupation"] = "Doctor"
+    data.loc[original_title == "Rev", "Occupation"] = "Clergy"
+    data.loc[
+        original_title.isin(["Col", "Major", "Capt"]),
+        "Occupation",
+    ] = "Military"
+
+    # 실제 Train/Test에서 확인된 귀족 또는 상류계급 관련 Title입니다.
+    noble_titles = [
+        "Sir",
+        "Lady",
+        "the Countess",
+        "Don",
+        "Dona",
+        "Jonkheer",
+    ]
+    data["IsNoble"] = original_title.isin(noble_titles).astype(int)
+
+    # 자주 등장하는 Title은 유지하고 나머지 희귀 Title은 Rare로 묶습니다.
+    # Occupation과 IsNoble은 묶기 전 원래 Title에서 이미 계산했습니다.
+    data["Title"] = original_title
+    data.loc[~data["Title"].isin(common_titles), "Title"] = "Rare"
+
+    return data
+OUTPUT:
+그대로 유지할 Title: ['Mr', 'Miss', 'Mrs', 'Master']
+
+
+### CELL 15 [markdown] execution=
+## Train과 Test에 Feature 추가
+
+### CELL 16 [code] execution=46
+# Train과 Test에 완전히 같은 Feature 생성 규칙을 적용합니다.
+train = add_features(train)
+test = add_features(test)
+
+# name을 제거하기 전에 이름에서 만들어진 결과를 직접 확인합니다.
+train[["name", "Title", "Occupation", "IsNoble"]].head(10)
+OUTPUT:
+                                                name Title Occupation  IsNoble
+0                     Wheeler, Mr. Edwin Frederick""    Mr      Other        0
+1                                 Henry, Miss. Delia  Miss      Other        0
+2  Hays, Mrs. Charles Melville (Clara Jennings Gr...   Mrs      Other        0
+3       Andersson, Mr. August Edvard ("Wennerstrom")    Mr      Other        0
+4                                  Hold, Mr. Stephen    Mr      Other        0
+5           Rosblom, Mrs. Viktor (Helena Wilhelmina)   Mrs      Other        0
+6                                Novel, Mr. Mansouer    Mr      Other        0
+7           Kelly, Miss. Anna Katherine "Annie Kate"  Miss      Other        0
+8                         de Brito, Mr. Jose Joaquim    Mr      Other        0
+9                               Petersen, Mr. Marius    Mr      Other        0
+
+### CELL 17 [code] execution=47
+# 생성된 다섯 가지 Feature를 직접 확인합니다.
+new_feature_cols = [
+    "FamilySize",
+    "IsAlone",
+    "Title",
+    "Occupation",
+    "IsNoble",
+]
+
+print("가공 후 Train Title 개수")
+print(train["Title"].value_counts())
+print("\nOccupation 개수")
+print(train["Occupation"].value_counts())
+print("\nIsNoble 개수")
+print(train["IsNoble"].value_counts().sort_index())
+
+train[new_feature_cols].head(10)
+OUTPUT:
+가공 후 Train Title 개수
+Title
+Mr        528
+Miss      185
+Mrs       138
+Master     42
+Rare       23
+Name: count, dtype: int64
+
+Occupation 개수
+Occupation
+Other       899
+Military      6
+Clergy        6
+Doctor        5
+Name: count, dtype: int64
+
+IsNoble 개수
+IsNoble
+0    912
+1      4
+Name: count, dtype: int64
+
+OUTPUT:
+   FamilySize  IsAlone Title Occupation  IsNoble
+0           1        1    Mr      Other        0
+1           1        1  Miss      Other        0
+2           3        0   Mrs      Other        0
+3           1        1    Mr      Other        0
+4           2        0    Mr      Other        0
+5           3        0   Mrs      Other        0
+6           1        1    Mr      Other        0
+7           1        1  Miss      Other        0
+8           1        1    Mr      Other        0
+9           1        1    Mr      Other        0
+
+### CELL 18 [markdown] execution=
+# 5. 불필요한 기존 컬럼 제거
+
+### CELL 19 [code] execution=48
+# name에서 필요한 정보를 만든 뒤, 기존 모델과 같은 원본 열을 제거합니다.
+drop_cols = ["name", "ticket", "cabin", "embarked"]
+train.drop(drop_cols, axis=1, inplace=True)
+test.drop(drop_cols, axis=1, inplace=True)
+
+# passengerid는 모델 Feature가 아니므로 index로 설정합니다.
+train.set_index(["passengerid"], inplace=True)
+test.set_index(["passengerid"], inplace=True)
+
+print("Train columns:")
+print(train.columns)
+print("\nTest columns:")
+print(test.columns)
+OUTPUT:
+Train columns:
+Index(['survived', 'pclass', 'gender', 'age', 'sibsp', 'parch', 'fare',
+       'FamilySize', 'IsAlone', 'Occupation', 'IsNoble', 'Title'],
+      dtype='str')
+
+Test columns:
+Index(['pclass', 'gender', 'age', 'sibsp', 'parch', 'fare', 'FamilySize',
+       'IsAlone', 'Occupation', 'IsNoble', 'Title'],
+      dtype='str')
+
+
+### CELL 20 [markdown] execution=
+# 6. cat_cols / features / target 설정
+
+### CELL 21 [code] execution=49
+# Title과 Occupation은 문자열 범주이므로 기존 cat_cols에 추가합니다.
+cat_cols = [
+    "pclass",
+    "gender",
+    "Title",
+    "Occupation",
+]
+
+features = train.drop(["survived"], axis=1)
+target = train["survived"]
+
+# 새 Feature가 실제 학습 데이터에 모두 들어갔는지 확인합니다.
+print("features columns:")
+print(features.columns)
+print("\ncat_cols:", cat_cols)
+
+for feature_name in new_feature_cols:
+    assert feature_name in features.columns, f"{feature_name}이 features에 없습니다."
+
+assert "Title" in cat_cols
+assert "Occupation" in cat_cols
+print("새 Feature 및 cat_cols 확인 완료")
+OUTPUT:
+features columns:
+Index(['pclass', 'gender', 'age', 'sibsp', 'parch', 'fare', 'FamilySize',
+       'IsAlone', 'Occupation', 'IsNoble', 'Title'],
+      dtype='str')
+
+cat_cols: ['pclass', 'gender', 'Title', 'Occupation']
+새 Feature 및 cat_cols 확인 완료
+
+
+### CELL 22 [markdown] execution=
+# 7. Base Model 준비
+
+### CELL 23 [code] execution=50
+# 기존과 같은 Modeling 객체가 새 Feature로 정상 생성되는지 확인합니다.
+modeling_check = Modeling(
+    x_tr=features.copy(),
+    y_tr=target.copy(),
+    cat_cols=cat_cols,
+)
+print("Modeling 준비 완료")
+OUTPUT:
+Modeling 준비 완료
+
+
+### CELL 24 [markdown] execution=
+# 8. Cross Validation 함수
+
+### CELL 25 [code] execution=51
+def cross_validation(features, targets, cat_cols, use_smote=False):
+    """2번 모델과 같은 방식으로 Stratified 5-Fold 교차검증을 수행합니다."""
+
+    # 전체 데이터를 target 비율이 유지되도록 5개의 Fold로 나눕니다.
+    stratified_kfold = StratifiedKFold(
+        n_splits=5,
+        shuffle=True,
+        random_state=0,
+    )
+
+    # 교차검증 결과를 저장할 리스트입니다.
+    auc_scores = []
+    accuracy_scores = []
+
+    # 각 행이 학습에 포함되지 않았던 Fold에서 받은 OOF 예측을 저장합니다.
+    oof_pred = np.zeros(len(features), dtype=int)
+    oof_proba = np.zeros(len(features), dtype=float)
+
+    if use_smote:
+        experiment_name = "3. model_feature_add + SMOTE"
+    else:
+        experiment_name = "3. model_feature_add"
+
+    print(f"[{experiment_name} Cross Validation]")
+
+    # 전체 데이터를 Fold별 Train과 Validation으로 분리합니다.
+    for fold, (train_idx, valid_idx) in enumerate(
+        stratified_kfold.split(features, targets),
+        start=1,
+    ):
+        # 현재 Fold에서 사용할 학습 데이터입니다.
+        x_train_fold = features.iloc[train_idx].copy()
+        y_train_fold = targets.iloc[train_idx].copy()
+
+        # 원본 Validation 데이터에는 SMOTE를 적용하지 않습니다.
+        x_valid_fold = features.iloc[valid_idx].copy()
+        y_valid_fold = targets.iloc[valid_idx].copy()
+
+        if use_smote:
+            # Fold Train에서만 범주형 인코더를 학습합니다.
+            # Title과 Occupation도 cat_cols에 있어 함께 변환됩니다.
+            category_encoder = OrdinalEncoder(
+                handle_unknown="use_encoded_value",
+                unknown_value=-1,
+            )
+            x_train_fold[cat_cols] = category_encoder.fit_transform(
+                x_train_fold[cat_cols]
+            )
+            x_valid_fold[cat_cols] = category_encoder.transform(
+                x_valid_fold[cat_cols]
+            )
+
+            # SMOTE 적용 전 Fold Train의 클래스 개수입니다.
+            print(f"\nFold {fold} - SMOTE 적용 전")
+            print(y_train_fold.value_counts().sort_index())
+
+            # 현재 Fold의 Train에만 SMOTE를 적용합니다.
+            smote = SMOTE(random_state=0)
+            x_train_fold, y_train_fold = smote.fit_resample(
+                x_train_fold,
+                y_train_fold,
+            )
+
+            # 2번 모델과 동일하게 범주형 열을 가장 가까운 범주 코드로 되돌립니다.
+            x_train_fold[cat_cols] = x_train_fold[cat_cols].round().astype("int64")
+            x_valid_fold[cat_cols] = x_valid_fold[cat_cols].astype("int64")
+
+            # SMOTE 적용 후 Fold Train의 클래스 개수입니다.
+            print(f"Fold {fold} - SMOTE 적용 후")
+            print(y_train_fold.value_counts().sort_index())
+
+        # Fold마다 기존 Modeling 객체를 새로 생성합니다.
+        fold_modeling = Modeling(
+            x_tr=x_train_fold,
+            y_tr=y_train_fold,
+            cat_cols=cat_cols,
+        )
+
+        # Fold Train으로 학습하고 원본 Fold Validation으로 평가합니다.
+        fold_modeling.fit_evaluation(
+            x_te=x_valid_fold,
+            y_te=y_valid_fold,
+        )
+
+        best_model_info = fold_modeling.get_best_model()
+        valid_pred = fold_modeling.predict_by_best_model(x_valid_fold)
+        
+        # survived=1의 확률값은 ROC-AUC 계산에 사용합니다.
+        valid_proba = fold_modeling.predict_proba_by_best_model(x_valid_fold)
+
+        # ROC-AUC에는 확률값을 사용합니다.
+        fold_auc = get_auc_score(y=y_valid_fold, pred=valid_proba)
+
+        # Accuracy에는 0/1 예측값을 사용합니다.
+        fold_accuracy = accuracy_score(y_valid_fold, valid_pred)
+
+        auc_scores.append(fold_auc)
+        accuracy_scores.append(fold_accuracy)
+
+        # 현재 Fold의 Validation 위치에 OOF 결과를 저장합니다.
+        oof_pred[valid_idx] = valid_pred
+        oof_proba[valid_idx] = valid_proba
+
+        print(f"\nFold {fold}:")
+        print(f"Train 데이터 크기: {x_train_fold.shape}")
+        print(f"Validation 데이터 크기: {x_valid_fold.shape}")
+        print(f"Best Model: {best_model_info['model_name']}")
+        print(f"AUC: {fold_auc:.6f}")
+        print(f"Accuracy: {fold_accuracy:.6f}")
+        print("-" * 50)
+
+    # 5개 Fold의 점수와 평균, 표준편차를 출력합니다.
+    print(f"\n[{experiment_name} Cross Validation 결과]")
+    for fold, (auc_score, accuracy) in enumerate(
+        zip(auc_scores, accuracy_scores),
+        start=1,
+    ):
+        print(f"Fold {fold}: AUC={auc_score:.6f}, Accuracy={accuracy:.6f}")
+
+    print(f"AUC Mean: {np.mean(auc_scores):.6f}")
+    print(f"AUC Std: {np.std(auc_scores):.6f}")
+    print(f"Accuracy Mean: {np.mean(accuracy_scores):.6f}")
+    print(f"Accuracy Std: {np.std(accuracy_scores):.6f}")
+
+    return {
+        "auc_scores": auc_scores,
+        "accuracy_scores": accuracy_scores,
+        "auc_mean": np.mean(auc_scores),
+        "auc_std": np.std(auc_scores),
+        "accuracy_mean": np.mean(accuracy_scores),
+        "accuracy_std": np.std(accuracy_scores),
+        "oof_pred": oof_pred,
+        "oof_proba": oof_proba,
+    }
+
+### CELL 26 [markdown] execution=
+# 9. Feature + Cross Validation
+
+### CELL 27 [code] execution=52
+# Feature를 추가하고 SMOTE는 적용하지 않은 5-Fold 결과입니다.
+feature_cv_result = cross_validation(
+    features=features,
+    targets=target,
+    cat_cols=cat_cols,
+    use_smote=False,
+)
+OUTPUT:
+[3. model_feature_add Cross Validation]
+
+OUTPUT:
+training..:   0%|          | 0/3 [00:00<?, ?it/s]
+OUTPUT:
+
+Fold 1:
+Train 데이터 크기: (732, 11)
+Validation 데이터 크기: (184, 11)
+Best Model: CatBoostClassifier
+AUC: 0.922744
+Accuracy: 0.896739
+--------------------------------------------------
+
+OUTPUT:
+training..:   0%|          | 0/3 [00:00<?, ?it/s]
+OUTPUT:
+
+Fold 2:
+Train 데이터 크기: (733, 11)
+Validation 데이터 크기: (183, 11)
+Best Model: CatBoostClassifier
+AUC: 0.891940
+Accuracy: 0.874317
+--------------------------------------------------
+
+OUTPUT:
+training..:   0%|          | 0/3 [00:00<?, ?it/s]
+OUTPUT:
+
+Fold 3:
+Train 데이터 크기: (733, 11)
+Validation 데이터 크기: (183, 11)
+Best Model: LGBMClassifier
+AUC: 0.888825
+Accuracy: 0.846995
+--------------------------------------------------
+
+OUTPUT:
+training..:   0%|          | 0/3 [00:00<?, ?it/s]
+OUTPUT:
+
+Fold 4:
+Train 데이터 크기: (733, 11)
+Validation 데이터 크기: (183, 11)
+Best Model: CatBoostClassifier
+AUC: 0.918065
+Accuracy: 0.874317
+--------------------------------------------------
+
+OUTPUT:
+training..:   0%|          | 0/3 [00:00<?, ?it/s]
+OUTPUT:
+
+Fold 5:
+Train 데이터 크기: (733, 11)
+Validation 데이터 크기: (183, 11)
+Best Model: CatBoostClassifier
+AUC: 0.877320
+Accuracy: 0.863388
+--------------------------------------------------
+
+[3. model_feature_add Cross Validation 결과]
+Fold 1: AUC=0.922744, Accuracy=0.896739
+Fold 2: AUC=0.891940, Accuracy=0.874317
+Fold 3: AUC=0.888825, Accuracy=0.846995
+Fold 4: AUC=0.918065, Accuracy=0.874317
+Fold 5: AUC=0.877320, Accuracy=0.863388
+AUC Mean: 0.899779
+AUC Std: 0.017593
+Accuracy Mean: 0.871151
+Accuracy Std: 0.016239
+
+
+### CELL 28 [markdown] execution=
+# 10. Feature + SMOTE Cross Validation
+
+### CELL 29 [code] execution=53
+# Feature를 추가하고 각 Fold Train에만 SMOTE를 적용한 결과입니다.
+feature_smote_cv_result = cross_validation(
+    features=features,
+    targets=target,
+    cat_cols=cat_cols,
+    use_smote=True,
+)
+OUTPUT:
+[3. model_feature_add + SMOTE Cross Validation]
+
+Fold 1 - SMOTE 적용 전
+survived
+0    456
+1    276
+Name: count, dtype: int64
+Fold 1 - SMOTE 적용 후
+survived
+0    456
+1    456
+Name: count, dtype: int64
+
+OUTPUT:
+training..:   0%|          | 0/3 [00:00<?, ?it/s]
+OUTPUT:
+
+Fold 1:
+Train 데이터 크기: (912, 11)
+Validation 데이터 크기: (184, 11)
+Best Model: XGBClassifier
+AUC: 0.917481
+Accuracy: 0.853261
+--------------------------------------------------
+
+Fold 2 - SMOTE 적용 전
+survived
+0    456
+1    277
+Name: count, dtype: int64
+Fold 2 - SMOTE 적용 후
+survived
+0    456
+1    456
+Name: count, dtype: int64
+
+OUTPUT:
+training..:   0%|          | 0/3 [00:00<?, ?it/s]
+OUTPUT:
+
+Fold 2:
+Train 데이터 크기: (912, 11)
+Validation 데이터 크기: (183, 11)
+Best Model: CatBoostClassifier
+AUC: 0.888380
+Accuracy: 0.846995
+--------------------------------------------------
+
+Fold 3 - SMOTE 적용 전
+survived
+0    456
+1    277
+Name: count, dtype: int64
+Fold 3 - SMOTE 적용 후
+survived
+0    456
+1    456
+Name: count, dtype: int64
+
+OUTPUT:
+training..:   0%|          | 0/3 [00:00<?, ?it/s]
+OUTPUT:
+
+Fold 3:
+Train 데이터 크기: (912, 11)
+Validation 데이터 크기: (183, 11)
+Best Model: CatBoostClassifier
+AUC: 0.891241
+Accuracy: 0.846995
+--------------------------------------------------
+
+Fold 4 - SMOTE 적용 전
+survived
+0    456
+1    277
+Name: count, dtype: int64
+Fold 4 - SMOTE 적용 후
+survived
+0    456
+1    456
+Name: count, dtype: int64
+
+OUTPUT:
+training..:   0%|          | 0/3 [00:00<?, ?it/s]
+OUTPUT:
+
+Fold 4:
+Train 데이터 크기: (912, 11)
+Validation 데이터 크기: (183, 11)
+Best Model: CatBoostClassifier
+AUC: 0.916857
+Accuracy: 0.868852
+--------------------------------------------------
+
+Fold 5 - SMOTE 적용 전
+survived
+0    456
+1    277
+Name: count, dtype: int64
+Fold 5 - SMOTE 적용 후
+survived
+0    456
+1    456
+Name: count, dtype: int64
+
+OUTPUT:
+training..:   0%|          | 0/3 [00:00<?, ?it/s]
+OUTPUT:
+
+Fold 5:
+Train 데이터 크기: (912, 11)
+Validation 데이터 크기: (183, 11)
+Best Model: CatBoostClassifier
+AUC: 0.884884
+Accuracy: 0.879781
+--------------------------------------------------
+
+[3. model_feature_add + SMOTE Cross Validation 결과]
+Fold 1: AUC=0.917481, Accuracy=0.853261
+Fold 2: AUC=0.888380, Accuracy=0.846995
+Fold 3: AUC=0.891241, Accuracy=0.846995
+Fold 4: AUC=0.916857, Accuracy=0.868852
+Fold 5: AUC=0.884884, Accuracy=0.879781
+AUC Mean: 0.899769
+AUC Std: 0.014351
+Accuracy Mean: 0.859177
+Accuracy Std: 0.013038
+
+
+### CELL 30 [markdown] execution=
+# 11. CV 결과 확인
+
+### CELL 31 [code] execution=54
+# Kaggle 최고 점수는 참고용으로만 기록합니다.
+# CV AUC나 Accuracy와 Kaggle Score를 같은 지표로 직접 비교하지 않습니다.
+best_kaggle_score = 0.91254
+print("[Feature 추가 전 참고]")
+print(f"현재 Kaggle 최고 점수: {best_kaggle_score}")
+print()
+print(f"Feature CV AUC Mean: {feature_cv_result['auc_mean']:.6f}")
+print(f"Feature CV AUC Std: {feature_cv_result['auc_std']:.6f}")
+print(
+    f"Feature + SMOTE CV AUC Mean: "
+    f"{feature_smote_cv_result['auc_mean']:.6f}"
+)
+print(
+    f"Feature + SMOTE CV AUC Std: "
+    f"{feature_smote_cv_result['auc_std']:.6f}"
+)
+print()
+print(
+    f"Feature CV Accuracy Mean: "
+    f"{feature_cv_result['accuracy_mean']:.6f}"
+)
+print(
+    f"Feature + SMOTE CV Accuracy Mean: "
+    f"{feature_smote_cv_result['accuracy_mean']:.6f}"
+)
+OUTPUT:
+[Feature 추가 전 참고]
+현재 Kaggle 최고 점수: 0.91254
+
+Feature CV AUC Mean: 0.899779
+Feature CV AUC Std: 0.017593
+Feature + SMOTE CV AUC Mean: 0.899769
+Feature + SMOTE CV AUC Std: 0.014351
+
+Feature CV Accuracy Mean: 0.871151
+Feature + SMOTE CV Accuracy Mean: 0.859177
+
+
+### CELL 32 [markdown] execution=
+# 12. 전체 Train + Feature + SMOTE 최종 학습
+
+### CELL 33 [code] execution=55
+# 전체 Train에서만 범주형 인코더를 학습합니다.
+# Test에는 전체 Train에서 학습한 변환 규칙만 적용합니다.
+final_encoder = OrdinalEncoder(
+    handle_unknown="use_encoded_value",
+    unknown_value=-1,
+)
+
+x_train_final = features.copy()
+x_test_final = test.copy()
+
+x_train_final[cat_cols] = final_encoder.fit_transform(
+    x_train_final[cat_cols]
+)
+x_test_final[cat_cols] = final_encoder.transform(
+    x_test_final[cat_cols]
+)
+
+# 최종 학습용 전체 Train에만 SMOTE를 적용합니다.
+print("전체 Train - SMOTE 적용 전")
+print(target.value_counts().sort_index())
+
+final_smote = SMOTE(random_state=0)
+x_train_final, y_train_final = final_smote.fit_resample(
+    x_train_final,
+    target,
+)
+
+# 2번 모델과 같은 방식으로 범주형 열을 정수 범주 코드로 되돌립니다.
+x_train_final[cat_cols] = x_train_final[cat_cols].round().astype("int64")
+x_test_final[cat_cols] = x_test_final[cat_cols].astype("int64")
+
+print("\n전체 Train - SMOTE 적용 후")
+print(y_train_final.value_counts().sort_index())
+
+# 기존 Modeling으로 최종 모델을 학습하고 best model을 선택합니다.
+final_modeling = Modeling(
+    x_tr=x_train_final,
+    y_tr=y_train_final,
+    cat_cols=cat_cols,
+)
+final_modeling.fit_evaluation(
+    x_te=x_train_final,
+    y_te=y_train_final,
+)
+final_modeling.get_best_model()
+OUTPUT:
+전체 Train - SMOTE 적용 전
+survived
+0    570
+1    346
+Name: count, dtype: int64
+
+전체 Train - SMOTE 적용 후
+survived
+0    570
+1    570
+Name: count, dtype: int64
+
+OUTPUT:
+training..:   0%|          | 0/3 [00:00<?, ?it/s]
+OUTPUT:
+{'model': XGBClassifier(base_score=None, booster=None, callbacks=None,
+               colsample_bylevel=None, colsample_bynode=None,
+               colsample_bytree=None, device=None, early_stopping_rounds=None,
+               enable_categorical=True, eval_metric=None, feature_types=None,
+               feature_weights=None, gamma=None, grow_policy=None,
+               importance_type=None, interaction_constraints=None,
+               learning_rate=None, max_bin=None, max_cat_threshold=None,
+               max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+               max_leaves=None, min_child_weight=None, missing=nan,
+               monotone_constraints=None, multi_strategy=None, n_estimators=None,
+               n_jobs=None, num_parallel_tree=None, ...),
+ 'model_name': 'XGBClassifier',
+ 'hpo': {'tree_method': 'hist', 'enable_categorical': True},
+ 'train_score': 0.9960541705140042,
+ 'test_score': 0.9960541705140042,
+ 'score_type': 'get_auc_score'}
+
+### CELL 34 [markdown] execution=
+# 13. Test Prediction
+
+### CELL 35 [code] execution=56
+# Modeling 내부의 학습 데이터와 같은 dtype으로 Test를 맞춥니다.
+bool_cols = x_test_final.select_dtypes(include=["bool", "boolean"]).columns
+x_test_final[bool_cols] = x_test_final[bool_cols].astype("int8")
+x_test_final[cat_cols] = x_test_final[cat_cols].astype("category")
+
+# ROC-AUC 방식의 Kaggle 제출에는 survived=1의 확률값을 사용합니다.
+# Test 데이터에는 SMOTE를 적용하지 않습니다.
+test_proba = final_modeling.predict_proba_by_best_model(x_test_final)
+
+print("예측 확률 개수:", len(test_proba))
+OUTPUT:
+예측 확률 개수: 393
+
+
+### CELL 36 [markdown] execution=
+# 14. Submission
+
+### CELL 37 [code] execution=57
+# 원본 submission과 예측 결과의 행 개수가 같은지 확인합니다.
+print(submission.shape)
+print(len(test_proba))
+assert submission.shape[0] == len(test_proba), "submission과 예측 결과의 행 개수가 다릅니다."
+
+# 기존과 같은 survived 열에 0~1 사이의 예측 확률을 넣습니다.
+submission["survived"] = test_proba
+
+# 제출값이 hard prediction이 아니라 확률값인지 확인합니다.
+print(submission["survived"].head())
+print("최솟값:", submission["survived"].min())
+print("최댓값:", submission["survived"].max())
+print("고유값 개수:", submission["survived"].nunique())
+
+assert submission["survived"].between(0, 1).all()
+assert submission["survived"].nunique() > 2
+OUTPUT:
+(393, 2)
+393
+0    0.947795
+1    0.993141
+2    0.963824
+3    0.052544
+4    0.944918
+Name: survived, dtype: float32
+최솟값: 0.00039410347
+최댓값: 0.99991775
+고유값 개수: 344
+
+
+### CELL 38 [markdown] execution=
+# 15. 결과 저장
+
+### CELL 39 [code] execution=58
+# 기존 submission을 덮어쓰지 않고 새 파일명으로 저장합니다.
+submission_path = "./submission/3. model_feature_add_result.csv"
+submission.to_csv(submission_path, index=False)
+print(f"저장된 Submission 경로: {submission_path}")
+OUTPUT:
+저장된 Submission 경로: ./submission/3. model_feature_add_result.csv
+
+
+### CELL 40 [markdown] execution=
+# 16. OOF Confusion Matrix
+
+각 승객이 학습에 포함되지 않았던 Fold의 0/1 예측을 사용하므로, 전체 Train을 다시 예측한 결과보다 일반화 성능을 더 정직하게 확인할 수 있습니다.
+
+### CELL 41 [code] execution=59
+# OOF 0/1 예측값
+oof_pred = feature_smote_cv_result["oof_pred"]
+oof_proba = feature_smote_cv_result["oof_proba"]
+
+print("Train 데이터 개수:", len(target))
+print("OOF 0/1 예측 개수:", len(oof_pred))
+print("OOF 확률값 개수:", len(oof_proba))
+
+assert len(oof_pred) == len(target)
+assert len(oof_proba) == len(target)
+
+# =========================
+# 1. 기존 Confusion Matrix
+# =========================
+cm = confusion_matrix(target, oof_pred)
+
+tn, fp, fn, tp = cm.ravel()
+
+print("TN:", tn)
+print("FP:", fp)
+print("FN:", fn)
+print("TP:", tp)
+
+
+# =========================
+# 2. 0~1 정규화 Confusion Matrix
+# =========================
+cm_normalized = confusion_matrix(
+    target,
+    oof_pred,
+    normalize="true"   # 실제 클래스 기준으로 정규화
+)
+
+print(cm_normalized)
+
+disp = ConfusionMatrixDisplay(
+    confusion_matrix=cm_normalized,
+    display_labels=["Dead", "Survived"],
+)
+
+disp.plot(
+    cmap="Blues",
+    values_format=".3f"
+)
+
+plt.title("Normalized OOF Confusion Matrix - Feature + SMOTE")
+plt.show()
+OUTPUT:
+Train 데이터 개수: 916
+OOF 0/1 예측 개수: 916
+OOF 확률값 개수: 916
+TN: 516
+FP: 54
+FN: 75
+TP: 271
+[[0.90526316 0.09473684]
+ [0.21676301 0.78323699]]
+
+OUTPUT:
+<Figure size 640x480 with 2 Axes>
+
+### CELL 42 [markdown] execution=
+# 17. 전체 Feature Correlation Heatmap
+
+### CELL 43 [code] execution=60
+# Heatmap에서 확인할 기존 Feature, 새 Feature, Target 순서입니다.
+# passengerid는 식별자이므로 포함하지 않습니다.
+corr_columns = [
+    "pclass",
+    "gender",
+    "age",
+    "sibsp",
+    "parch",
+    "fare",
+    "FamilySize",
+    "IsAlone",
+    "Title",
+    "Occupation",
+    "IsNoble",
+    "survived",
+]
+
+# Heatmap 변환이 실제 학습 데이터에 영향을 주지 않는지 확인하기 위해 dtype을 저장합니다.
+features_dtypes_before_heatmap = features.dtypes.copy()
+
+# 시각화 전용 복사본을 만들고 Target을 추가합니다.
+corr_df = features.copy()
+corr_df["survived"] = target.values
+corr_df = corr_df[corr_columns]
+
+# 범주형 변수는 Heatmap 시각화를 위해서만 숫자로 변환합니다.
+# 숫자 코드 사이의 Pearson 상관계수는 탐색용 참고 지표로만 해석합니다.
+categorical_corr_cols = ["gender", "Title", "Occupation"]
+for col in categorical_corr_cols:
+    corr_df[col] = pd.factorize(corr_df[col])[0]
+
+corr_matrix = corr_df.corr()
+
+# 모든 기존 Feature, 새 Feature, Target이 Heatmap에 포함됐는지 확인합니다.
+assert corr_matrix.columns.tolist() == corr_columns
+assert features.dtypes.equals(features_dtypes_before_heatmap)
+print("Heatmap columns:", corr_matrix.columns.tolist())
+print("학습용 features dtype 변경 없음")
+
+plt.figure(figsize=(14, 10))
+sns.heatmap(
+    corr_matrix,
+    annot=True,
+    fmt=".2f",
+    cmap="coolwarm",
+    center=0,
+    square=True,
+)
+plt.title("Feature Correlation Heatmap")
+plt.xticks(rotation=45, ha="right")
+plt.yticks(rotation=0)
+plt.tight_layout()
+plt.show()
+OUTPUT:
+Heatmap columns: ['pclass', 'gender', 'age', 'sibsp', 'parch', 'fare', 'FamilySize', 'IsAlone', 'Title', 'Occupation', 'IsNoble', 'survived']
+학습용 features dtype 변경 없음
+
+OUTPUT:
+<Figure size 1400x1000 with 2 Axes>

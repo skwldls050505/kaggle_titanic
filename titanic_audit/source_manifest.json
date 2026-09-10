@@ -1,0 +1,347 @@
+[
+  {
+    "path": "C:\\dev\\study\\machine_learning\\feature_experiment_report_10_15.md",
+    "bytes": 7222,
+    "sha256": "D9667D94F7E3672C80292DE7E3FFCCE9F0FFFD06031D90D10475F6170E75901F"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\feature_experiment_report_3_9.md",
+    "bytes": 5299,
+    "sha256": "A58A60D323EBF43498BF753F14C8C71A9ED87C976ED36E44BB1B50F4B166A9F0"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\feature_experiment_results_10_15.json",
+    "bytes": 15382,
+    "sha256": "69D5CAB01BBAF7146CDC7036E84D8FD3C88A2AD9A12F7297DEC8ED437902A35B"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\feature_experiment_results_3_9.json",
+    "bytes": 17208,
+    "sha256": "985B18ABC61FE0F936BF030AC8940A4F28CC7CD6CFE7EC1AA4F97915D1CD3834"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\pyproject.toml",
+    "bytes": 389,
+    "sha256": "431BD88632FD49811CB1C287369D02BEEF38EDDF1027E9D4530265B4396FEE23"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_1 copy.ipynb",
+    "bytes": 286605,
+    "sha256": "5E231BD220E35BE86EDD9A9B018100DD6DEE31A861034BD3F299E932BB222954"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_1.ipynb",
+    "bytes": 56841,
+    "sha256": "E8B73F5A92982D674834E84532CF4C6C2C2BE03F76F906197AF8F5331907E918"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_10.ipynb",
+    "bytes": 46708,
+    "sha256": "CB93E870F7AB03F0C3CADD3C4D89B678FCE2AA2E48321068658C9D4AD5BB000F"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_11.ipynb",
+    "bytes": 321396,
+    "sha256": "31DA9ADC2FB9192E768D28C3F7FE3AEE7AEE5E8B85F42A88F006005C800184E5"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_12.ipynb",
+    "bytes": 44120,
+    "sha256": "68B0584D4A735EEAD198069E3AA59575A8D11CCD86734FDF518ADB4F058B9A3D"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_13.ipynb",
+    "bytes": 47697,
+    "sha256": "CEC2ED3A1C22A38C0F4772B3ACCB0C79E90E3814F1DB6937CC943C2931598CF4"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_14.ipynb",
+    "bytes": 54043,
+    "sha256": "11313E88F6C2170360B35F95F3C2630E9B66C4CCDFCE97101A3AB0334AA2D4C0"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_15.ipynb",
+    "bytes": 75389,
+    "sha256": "FB087A3DD317C80F5A29AED7F41F371655448FF1C9DA67658511548E4F77FCED"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_16_isnoble.ipynb",
+    "bytes": 57817,
+    "sha256": "4B81BD2F0EF260FF218EB397C11B1874E2292046EDE3E57F2D6B700993E579E7"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_17_profession_group.ipynb",
+    "bytes": 73479,
+    "sha256": "71FA436ED0E626C1078E82A0D36EE1D5E70DC024E62788A3CADF8229FA1B8929"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_2.ipynb",
+    "bytes": 82411,
+    "sha256": "1DDC68B5509506C673BA520750936E825DB9B73541EA126D323BE6E2274976F9"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_3.ipynb",
+    "bytes": 47999,
+    "sha256": "CB72A20A29343D62049DB22921B3F99D7DAF1172C0B9E2EC881DABD1CD7241EE"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_4.ipynb",
+    "bytes": 44877,
+    "sha256": "28F66A969C4BB19390BD6CDDA65C94C0BFDC816E2B8BEFCF848CC9676A95AFF4"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_5.ipynb",
+    "bytes": 42428,
+    "sha256": "EB91000EA5DA19925214CA5DCAACF84D095A62D06DEE961A5A63CFA1BC1CA73C"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_6.ipynb",
+    "bytes": 37963,
+    "sha256": "22CC0B543D9D35C46763C5646A0088981DB29C19D314C7EFC157F75B8C5F5CC3"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_7.ipynb",
+    "bytes": 39877,
+    "sha256": "0B166FE7A68D3D0AAFCB7809A0ED4001A14DBE9D8CEBF2DB1C877B1040332D26"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_8.ipynb",
+    "bytes": 42248,
+    "sha256": "26A43E4334C21FE8AA445B8E69E6F8310BA9DB8545F5C022C62F08104660238B"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_9.ipynb",
+    "bytes": 48520,
+    "sha256": "4F71D0B6A985B5F61114C017015C45E5BFDBE55E6937F3EDE8C8F018DCDFB254"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\titanic_base_smote_experiment.ipynb",
+    "bytes": 92604,
+    "sha256": "3C4EE1F0ED34FA38EC8A0B93DEC8887092326A765389FDD56F1451D9CF92EBCA"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\common\\evaluations.py",
+    "bytes": 277,
+    "sha256": "F817F4F8FEF34D7AD4AEF5A96D89726630A2A6603C92845D40E9CEECD0FCC015"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\common\\feature_experiments.py",
+    "bytes": 5231,
+    "sha256": "2A92E1D4C733CCD9CE962C111C4F12D56C9BABF3ABC72BF4865624551C29B787"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\common\\interaction_experiments.py",
+    "bytes": 4388,
+    "sha256": "8E9F2EB2C499F87CEE14A3171CF6F43A06B0BA0F9D0C550A1C1B628617B4BC84"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\common\\modeling.py",
+    "bytes": 7266,
+    "sha256": "380A5A63849E4021140AEE280A726FC092AD3A181F344EB7245B2162974DFD77"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\common\\preprocessing.py",
+    "bytes": 3357,
+    "sha256": "E89EF18B0665FAAD939A6EAE9277B4BC1874ACD005273E1B755FACAF4E70BC09"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\common\\title_feature_experiments.py",
+    "bytes": 4170,
+    "sha256": "461053620E24B53F3D261C759D330589A51E578EBEEEFFAA88AD81E0F65204EC"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\common\\utils.py",
+    "bytes": 763,
+    "sha256": "004EE1974091C6FE90B251D80EE19D166682C3F1CBEFFEC76E111FB0529FE418"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\csv\\submission.csv",
+    "bytes": 3868,
+    "sha256": "723AB89193140F3C5A901CA96A7FCBB9869BBA674E385A1C7FF77CDBD029E697"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\csv\\test.csv",
+    "bytes": 27384,
+    "sha256": "9DF3361DE7838476CC9A9D216E09F58EDBF6B1267DFD188D8A504B943671A070"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\csv\\train.csv",
+    "bytes": 64952,
+    "sha256": "F752A254EAF503F4CFD0DACD6854B4E9638D78D65EE9E9944B8DB8895D991617"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\my_folder\\3-3. 앙상블 예제 - 모듈화.ipynb",
+    "bytes": 11969,
+    "sha256": "93523BA39B7FF701D9C9B291D971DF4B6407DA56D143738B4066F91C3359CCD0"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\my_folder\\타이타닉 내가 순서 정리한 것.ipynb",
+    "bytes": 182920,
+    "sha256": "D47991F0DBA9C94607754785582FF8FEE9BA4620C6FB082351D9100D2B89A04F"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\my_folder\\titanic_baseline_guide.md",
+    "bytes": 11501,
+    "sha256": "6B7D6E2A95942458E1B931A76305E10EFB335A8BF31F68040624FB2588C7F39F"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\my_folder\\titanic_eda.ipynb",
+    "bytes": 569399,
+    "sha256": "C487949AEC24C72E4AEBFD0812893FEB7FD27845E2BE45F573723E9AE8923D0D"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\submission_result_1.csv",
+    "bytes": 9958,
+    "sha256": "63ACCF77B10D71F2966E9E9AF63A506C88C7E9C85F0B738E81E0A4AD5E3D7794"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_10.csv",
+    "bytes": 9960,
+    "sha256": "ED9DFD6C863106DB1C40BA54F50DACE9EEAE9601D15E9FE2BA8601DF73049F55"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_11.csv",
+    "bytes": 9972,
+    "sha256": "F57B05BA7BF63E7AE295747A82A631485A592D19428BD9F53374ADA72BE3BAC1"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_12.csv",
+    "bytes": 9992,
+    "sha256": "E65829D63F05F320619D1F21EB0B2F0AF00DDAA79E7B69BA9EE5F09B18D61F5C"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_13.csv",
+    "bytes": 9970,
+    "sha256": "58318C32A6311B4BF2FA93001ECF5D7655425485104B191DCAEA92155F83B65B"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_14.csv",
+    "bytes": 9962,
+    "sha256": "4A8BA5B7517883603F4F24A39EF82D1C4515644CE44212BE2417A38E442CAD2C"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_15.csv",
+    "bytes": 9974,
+    "sha256": "FBBFA51E5673D38611077685770CD3393D5334CCF9EC1A799B84234D1B00A3C7"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_2.csv",
+    "bytes": 9958,
+    "sha256": "63ACCF77B10D71F2966E9E9AF63A506C88C7E9C85F0B738E81E0A4AD5E3D7794"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_3.csv",
+    "bytes": 9972,
+    "sha256": "7016CAB089648B80D7F43F09381A3B2A189B57ED1F7E11B1020D232C11934C44"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_4.csv",
+    "bytes": 9970,
+    "sha256": "314B0416A4175FCD79549C44DB6CEBAEFDDF8351CE9468A10920BEA7D7DA8DA3"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_5.csv",
+    "bytes": 9960,
+    "sha256": "43A50E7AC00E19B2B1A9CEAF2CCB6DFDF98B16902D0014CB1C772E60D89FFB3B"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_6.csv",
+    "bytes": 9968,
+    "sha256": "DA61A62AC3A22C80DA6F68DA10D3942E30E04695216DA348F25433208D90AA45"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_7.csv",
+    "bytes": 9992,
+    "sha256": "58127CBFF6289196D2B7E90563AE2FF258E5527885D89248940AC04020C205DC"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_8.csv",
+    "bytes": 9979,
+    "sha256": "6A01D2EF80B781EE391FE27B924D332D8ABA89493EFA060D8C64B0D80AEBEA46"
+  },
+  {
+    "path": "C:\\dev\\study\\machine_learning\\submission\\titanic_result_9.csv",
+    "bytes": 9953,
+    "sha256": "DB3B1D75D3820D9016EEA1D89A03E0101D33BC2524FBEFDC4D1072F470829EB0"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\1. base model.ipynb",
+    "bytes": 66103,
+    "sha256": "035410B5DCC30DD285960CF8AC2D5A7AAE66DFADDED100C163108CC22845D77E"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\2. model.ipynb",
+    "bytes": 176517,
+    "sha256": "D257ADFC826E4CC6CB20E4C7748B05575E2A954A8A5B87C1151FF0B2D2DD7CA1"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\3. model_feature_add.ipynb",
+    "bytes": 382626,
+    "sha256": "001B3F56D182272639CDC6384CC58EB259CFEF150B25EDAED4FA48D94F90D42B"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\4. model_feature_add2.ipynb",
+    "bytes": 354686,
+    "sha256": "4BA19CD007CE36D07CF42669C4CA0CE52877AB415FDABEB2243F445FAC4B0E7B"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\pyproject.toml",
+    "bytes": 404,
+    "sha256": "5C806A710F53D36C6F0FB3899FF07680A6B75EF9C61E4786ABC5EAA804BB7157"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\common\\evaluation_plots.py",
+    "bytes": 388,
+    "sha256": "AF84B436FC95457EC5DE30D31E7F3E7119282F4B36A94401B53F336007A824F9"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\common\\evaluations.py",
+    "bytes": 277,
+    "sha256": "F817F4F8FEF34D7AD4AEF5A96D89726630A2A6603C92845D40E9CEECD0FCC015"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\common\\modeling.py",
+    "bytes": 5652,
+    "sha256": "C707970C8BFB9554E4F8DF4E4179A1FD47C29F54AEB48D5355E5194FB90A2692"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\common\\utils.py",
+    "bytes": 763,
+    "sha256": "004EE1974091C6FE90B251D80EE19D166682C3F1CBEFFEC76E111FB0529FE418"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\data\\submission.csv",
+    "bytes": 3868,
+    "sha256": "723AB89193140F3C5A901CA96A7FCBB9869BBA674E385A1C7FF77CDBD029E697"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\data\\test.csv",
+    "bytes": 27384,
+    "sha256": "9DF3361DE7838476CC9A9D216E09F58EDBF6B1267DFD188D8A504B943671A070"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\data\\train.csv",
+    "bytes": 64952,
+    "sha256": "F752A254EAF503F4CFD0DACD6854B4E9638D78D65EE9E9944B8DB8895D991617"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\submission\\2. model_result.csv",
+    "bytes": 3082,
+    "sha256": "CFB459E2D17C6E4532447756AE5826B90A4950C4616CBB84E0646847505A1ACB"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\submission\\3. model_feature_add_result.csv",
+    "bytes": 6640,
+    "sha256": "D6C990C8A2EC4ED96417CC3162F58CCE6B53D66B3339C38B12093321192BA075"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\submission\\4. model_feature_add2_result.csv",
+    "bytes": 9935,
+    "sha256": "44DF0C345325055E78CEDF630161DE72437AF79A6E933525E58054B19BEA65F6"
+  },
+  {
+    "path": "C:\\dev\\project\\kaggle_skn35 v1\\submission\\base_model_0909_01_(95.36).csv",
+    "bytes": 3082,
+    "sha256": "651B807C49042E2301811E685046713173B89E08F6A01FCB61D777AE617B3386"
+  }
+]

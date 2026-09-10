@@ -1,0 +1,643 @@
+[
+  {
+    "version": 10,
+    "feature": "GenderIsChild",
+    "previous_features": [
+      "GenderClass"
+    ],
+    "candidate_features": [
+      "GenderClass",
+      "GenderIsChild"
+    ],
+    "accepted": true,
+    "scores": {
+      "train_auc": 0.9650648531796073,
+      "validation_auc": 0.9042933810375672,
+      "gap": 0.06077147214204015
+    },
+    "previous_scores": {
+      "train_auc": 0.9630471987029363,
+      "validation_auc": 0.9029110424459262,
+      "gap": 0.060136156257010076
+    },
+    "cv": {
+      "mean": 0.9059066143619919,
+      "std": 0.017323969521877203
+    },
+    "previous_cv": {
+      "mean": 0.9046761832116523,
+      "std": 0.01613237786295489
+    },
+    "best_features": [
+      "GenderClass",
+      "GenderIsChild"
+    ],
+    "best_scores": {
+      "train_auc": 0.9650648531796073,
+      "validation_auc": 0.9042933810375672,
+      "gap": 0.06077147214204015
+    },
+    "best_cv": {
+      "mean": 0.9059066143619919,
+      "std": 0.017323969521877203
+    },
+    "holdout_delta": 0.0013823385916409414,
+    "original_delta": 0.0042283298097252064,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "GenderClass_female_1",
+      "GenderClass_female_2",
+      "GenderClass_female_3",
+      "GenderClass_male_1",
+      "GenderClass_male_2",
+      "GenderClass_male_3",
+      "GenderIsChild_female_0",
+      "GenderIsChild_female_1",
+      "GenderIsChild_male_0",
+      "GenderIsChild_male_1"
+    ],
+    "folds": [
+      {
+        "fold": 1,
+        "model": "Original baseline",
+        "auc": 0.8919172932330827
+      },
+      {
+        "fold": 1,
+        "model": "Previous best",
+        "auc": 0.8954887218045113
+      },
+      {
+        "fold": 1,
+        "model": "Candidate",
+        "auc": 0.8964285714285715
+      },
+      {
+        "fold": 2,
+        "model": "Original baseline",
+        "auc": 0.9190821256038647
+      },
+      {
+        "fold": 2,
+        "model": "Previous best",
+        "auc": 0.9222603610475464
+      },
+      {
+        "fold": 2,
+        "model": "Candidate",
+        "auc": 0.92442156114925
+      },
+      {
+        "fold": 3,
+        "model": "Original baseline",
+        "auc": 0.8787821001779812
+      },
+      {
+        "fold": 3,
+        "model": "Previous best",
+        "auc": 0.8817060767861683
+      },
+      {
+        "fold": 3,
+        "model": "Candidate",
+        "auc": 0.8809433002796847
+      },
+      {
+        "fold": 4,
+        "model": "Original baseline",
+        "auc": 0.9064327485380117
+      },
+      {
+        "fold": 4,
+        "model": "Previous best",
+        "auc": 0.9093567251461988
+      },
+      {
+        "fold": 4,
+        "model": "Candidate",
+        "auc": 0.9108822781591661
+      },
+      {
+        "fold": 5,
+        "model": "Original baseline",
+        "auc": 0.9126620900076278
+      },
+      {
+        "fold": 5,
+        "model": "Previous best",
+        "auc": 0.9145690312738367
+      },
+      {
+        "fold": 5,
+        "model": "Candidate",
+        "auc": 0.9168573607932875
+      }
+    ]
+  },
+  {
+    "version": 11,
+    "feature": "ClassIsChild",
+    "previous_features": [
+      "GenderClass",
+      "GenderIsChild"
+    ],
+    "candidate_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild"
+    ],
+    "accepted": true,
+    "scores": {
+      "train_auc": 0.9647946315979103,
+      "validation_auc": 0.906488859977232,
+      "gap": 0.05830577162067829
+    },
+    "previous_scores": {
+      "train_auc": 0.9650648531796073,
+      "validation_auc": 0.9042933810375672,
+      "gap": 0.06077147214204015
+    },
+    "cv": {
+      "mean": 0.9062327921252408,
+      "std": 0.018564264845361396
+    },
+    "previous_cv": {
+      "mean": 0.9059066143619919,
+      "std": 0.017323969521877203
+    },
+    "best_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild"
+    ],
+    "best_scores": {
+      "train_auc": 0.9647946315979103,
+      "validation_auc": 0.906488859977232,
+      "gap": 0.05830577162067829
+    },
+    "best_cv": {
+      "mean": 0.9062327921252408,
+      "std": 0.018564264845361396
+    },
+    "holdout_delta": 0.0021954789396648744,
+    "original_delta": 0.006423808749390081,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "GenderClass_female_1",
+      "GenderClass_female_2",
+      "GenderClass_female_3",
+      "GenderClass_male_1",
+      "GenderClass_male_2",
+      "GenderClass_male_3",
+      "GenderIsChild_female_0",
+      "GenderIsChild_female_1",
+      "GenderIsChild_male_0",
+      "GenderIsChild_male_1",
+      "ClassIsChild_1_0",
+      "ClassIsChild_1_1",
+      "ClassIsChild_2_0",
+      "ClassIsChild_2_1",
+      "ClassIsChild_3_0",
+      "ClassIsChild_3_1"
+    ],
+    "folds": [
+      {
+        "fold": 1,
+        "model": "Original baseline",
+        "auc": 0.8919172932330827
+      },
+      {
+        "fold": 1,
+        "model": "Previous best",
+        "auc": 0.8964285714285715
+      },
+      {
+        "fold": 1,
+        "model": "Candidate",
+        "auc": 0.8979323308270678
+      },
+      {
+        "fold": 2,
+        "model": "Original baseline",
+        "auc": 0.9190821256038647
+      },
+      {
+        "fold": 2,
+        "model": "Previous best",
+        "auc": 0.92442156114925
+      },
+      {
+        "fold": 2,
+        "model": "Candidate",
+        "auc": 0.9263285024154589
+      },
+      {
+        "fold": 3,
+        "model": "Original baseline",
+        "auc": 0.8787821001779812
+      },
+      {
+        "fold": 3,
+        "model": "Previous best",
+        "auc": 0.8809433002796847
+      },
+      {
+        "fold": 3,
+        "model": "Candidate",
+        "auc": 0.8785278413424867
+      },
+      {
+        "fold": 4,
+        "model": "Original baseline",
+        "auc": 0.9064327485380117
+      },
+      {
+        "fold": 4,
+        "model": "Previous best",
+        "auc": 0.9108822781591661
+      },
+      {
+        "fold": 4,
+        "model": "Candidate",
+        "auc": 0.9117721840833969
+      },
+      {
+        "fold": 5,
+        "model": "Original baseline",
+        "auc": 0.9126620900076278
+      },
+      {
+        "fold": 5,
+        "model": "Previous best",
+        "auc": 0.9168573607932875
+      },
+      {
+        "fold": 5,
+        "model": "Candidate",
+        "auc": 0.9166031019577929
+      }
+    ]
+  },
+  {
+    "version": 12,
+    "feature": "GenderIsAlone",
+    "previous_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild"
+    ],
+    "candidate_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild",
+      "GenderIsAlone"
+    ],
+    "accepted": false,
+    "scores": {
+      "train_auc": 0.9634705458475951,
+      "validation_auc": 0.9046186371767767,
+      "gap": 0.058851908670818354
+    },
+    "previous_scores": {
+      "train_auc": 0.9647946315979103,
+      "validation_auc": 0.906488859977232,
+      "gap": 0.05830577162067829
+    },
+    "cv": null,
+    "previous_cv": {
+      "mean": 0.9062327921252408,
+      "std": 0.018564264845361396
+    },
+    "best_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild"
+    ],
+    "best_scores": {
+      "train_auc": 0.9647946315979103,
+      "validation_auc": 0.906488859977232,
+      "gap": 0.05830577162067829
+    },
+    "best_cv": {
+      "mean": 0.9062327921252408,
+      "std": 0.018564264845361396
+    },
+    "holdout_delta": -0.0018702228004553456,
+    "original_delta": 0.004553585948934735,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "GenderClass_female_1",
+      "GenderClass_female_2",
+      "GenderClass_female_3",
+      "GenderClass_male_1",
+      "GenderClass_male_2",
+      "GenderClass_male_3",
+      "GenderIsChild_female_0",
+      "GenderIsChild_female_1",
+      "GenderIsChild_male_0",
+      "GenderIsChild_male_1",
+      "ClassIsChild_1_0",
+      "ClassIsChild_1_1",
+      "ClassIsChild_2_0",
+      "ClassIsChild_2_1",
+      "ClassIsChild_3_0",
+      "ClassIsChild_3_1",
+      "GenderIsAlone_female_0",
+      "GenderIsAlone_female_1",
+      "GenderIsAlone_male_0",
+      "GenderIsAlone_male_1"
+    ]
+  },
+  {
+    "version": 13,
+    "feature": "EmbarkedClass",
+    "previous_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild"
+    ],
+    "candidate_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild",
+      "EmbarkedClass"
+    ],
+    "accepted": false,
+    "scores": {
+      "train_auc": 0.9634885606197082,
+      "validation_auc": 0.9057570336640105,
+      "gap": 0.05773152695569772
+    },
+    "previous_scores": {
+      "train_auc": 0.9647946315979103,
+      "validation_auc": 0.906488859977232,
+      "gap": 0.05830577162067829
+    },
+    "cv": null,
+    "previous_cv": {
+      "mean": 0.9062327921252408,
+      "std": 0.018564264845361396
+    },
+    "best_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild"
+    ],
+    "best_scores": {
+      "train_auc": 0.9647946315979103,
+      "validation_auc": 0.906488859977232,
+      "gap": 0.05830577162067829
+    },
+    "best_cv": {
+      "mean": 0.9062327921252408,
+      "std": 0.018564264845361396
+    },
+    "holdout_delta": -0.0007318263132215508,
+    "original_delta": 0.00569198243616853,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "GenderClass_female_1",
+      "GenderClass_female_2",
+      "GenderClass_female_3",
+      "GenderClass_male_1",
+      "GenderClass_male_2",
+      "GenderClass_male_3",
+      "GenderIsChild_female_0",
+      "GenderIsChild_female_1",
+      "GenderIsChild_male_0",
+      "GenderIsChild_male_1",
+      "ClassIsChild_1_0",
+      "ClassIsChild_1_1",
+      "ClassIsChild_2_0",
+      "ClassIsChild_2_1",
+      "ClassIsChild_3_0",
+      "ClassIsChild_3_1",
+      "EmbarkedClass_C_1",
+      "EmbarkedClass_C_2",
+      "EmbarkedClass_C_3",
+      "EmbarkedClass_Q_1",
+      "EmbarkedClass_Q_2",
+      "EmbarkedClass_Q_3",
+      "EmbarkedClass_S_1",
+      "EmbarkedClass_S_2",
+      "EmbarkedClass_S_3"
+    ]
+  },
+  {
+    "version": 14,
+    "feature": "TicketPrefix",
+    "previous_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild"
+    ],
+    "candidate_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild",
+      "TicketPrefix"
+    ],
+    "accepted": false,
+    "scores": {
+      "train_auc": 0.9696991533057108,
+      "validation_auc": 0.9024231582371117,
+      "gap": 0.06727599506859905
+    },
+    "previous_scores": {
+      "train_auc": 0.9647946315979103,
+      "validation_auc": 0.906488859977232,
+      "gap": 0.05830577162067829
+    },
+    "cv": null,
+    "previous_cv": {
+      "mean": 0.9062327921252408,
+      "std": 0.018564264845361396
+    },
+    "best_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild"
+    ],
+    "best_scores": {
+      "train_auc": 0.9647946315979103,
+      "validation_auc": 0.906488859977232,
+      "gap": 0.05830577162067829
+    },
+    "best_cv": {
+      "mean": 0.9062327921252408,
+      "std": 0.018564264845361396
+    },
+    "holdout_delta": -0.004065701740120331,
+    "original_delta": 0.00235810700926975,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "GenderClass_female_1",
+      "GenderClass_female_2",
+      "GenderClass_female_3",
+      "GenderClass_male_1",
+      "GenderClass_male_2",
+      "GenderClass_male_3",
+      "GenderIsChild_female_0",
+      "GenderIsChild_female_1",
+      "GenderIsChild_male_0",
+      "GenderIsChild_male_1",
+      "ClassIsChild_1_0",
+      "ClassIsChild_1_1",
+      "ClassIsChild_2_0",
+      "ClassIsChild_2_1",
+      "ClassIsChild_3_0",
+      "ClassIsChild_3_1",
+      "TicketPrefix_A4",
+      "TicketPrefix_A5",
+      "TicketPrefix_C",
+      "TicketPrefix_CA",
+      "TicketPrefix_FCC",
+      "TicketPrefix_NUMERIC",
+      "TicketPrefix_PC",
+      "TicketPrefix_Rare",
+      "TicketPrefix_SCPARIS",
+      "TicketPrefix_SOC",
+      "TicketPrefix_SOPP",
+      "TicketPrefix_SOTONOQ",
+      "TicketPrefix_STONO2",
+      "TicketPrefix_WC"
+    ]
+  },
+  {
+    "version": 15,
+    "feature": "AgeBand",
+    "previous_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild"
+    ],
+    "candidate_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild",
+      "AgeBand"
+    ],
+    "accepted": false,
+    "scores": {
+      "train_auc": 0.965299045217078,
+      "validation_auc": 0.9036428687591479,
+      "gap": 0.06165617645793009
+    },
+    "previous_scores": {
+      "train_auc": 0.9647946315979103,
+      "validation_auc": 0.906488859977232,
+      "gap": 0.05830577162067829
+    },
+    "cv": null,
+    "previous_cv": {
+      "mean": 0.9062327921252408,
+      "std": 0.018564264845361396
+    },
+    "best_features": [
+      "GenderClass",
+      "GenderIsChild",
+      "ClassIsChild"
+    ],
+    "best_scores": {
+      "train_auc": 0.9647946315979103,
+      "validation_auc": 0.906488859977232,
+      "gap": 0.05830577162067829
+    },
+    "best_cv": {
+      "mean": 0.9062327921252408,
+      "std": 0.018564264845361396
+    },
+    "holdout_delta": -0.002845991218084154,
+    "original_delta": 0.003577817531305927,
+    "final_columns": [
+      "pclass",
+      "age",
+      "sibsp",
+      "parch",
+      "fare",
+      "FamilySize",
+      "IsAlone",
+      "gender_female",
+      "gender_male",
+      "embarked_C",
+      "embarked_Q",
+      "embarked_S",
+      "GenderClass_female_1",
+      "GenderClass_female_2",
+      "GenderClass_female_3",
+      "GenderClass_male_1",
+      "GenderClass_male_2",
+      "GenderClass_male_3",
+      "GenderIsChild_female_0",
+      "GenderIsChild_female_1",
+      "GenderIsChild_male_0",
+      "GenderIsChild_male_1",
+      "ClassIsChild_1_0",
+      "ClassIsChild_1_1",
+      "ClassIsChild_2_0",
+      "ClassIsChild_2_1",
+      "ClassIsChild_3_0",
+      "ClassIsChild_3_1",
+      "AgeBand_Adult",
+      "AgeBand_Child",
+      "AgeBand_Senior",
+      "AgeBand_Teen",
+      "AgeBand_YoungAdult"
+    ]
+  }
+]

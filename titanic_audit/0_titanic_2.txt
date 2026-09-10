@@ -1,0 +1,804 @@
+
+### CELL 1 [markdown] execution=
+# 2차 실험 가설과 채택 기준
+Baseline은 titanic_1.ipynb와 실제 기존 파일 submission/submission_result_1.csv입니다. 기존 파일과 common은 수정하지 않습니다.
+
+**가설 1 — HasCabin:** 객실 원문은 약 79% 결측으로 제외하지만, 정보 존재 여부가 등급/운임을 넘어 추가 신호를 제공할 수 있다.
+**가설 2 — AgeMissing:** 성별·등급별 중앙값으로 치환하면서 사라지는 나이 누락 여부가 추가 신호일 수 있다.
+각각 baseline에 이진 변수 하나만 추가하며 조합하지 않습니다. CatBoost 하이퍼파라미터도 변경하지 않습니다.
+성별×등급은 트리가 이미 조합을 학습할 수 있고, IsAlone 제거는 기존 정보의 표현 변경이므로 이번에는 후순위로 둡니다.
+
+채택 기준을 실행 전에 정합니다: holdout AUC가 재현 baseline보다 높고 Gap 증가가 0.01 이내인 후보 중 AUC 최대를 5-fold 후보로 선택합니다. 0.01은 이번 실험의 운영 기준이며 통계적 유의성 기준이 아닙니다.
+후보의 같은 5-fold 평균 AUC가 baseline보다 낮으면 baseline으로 돌아갑니다. 같거나 높으면 후보를 잠정 채택합니다. CV는 후보 선택 뒤 보는 보조 진단이며 독립적인 최종 성능 보증은 아닙니다.
+모든 전처리는 학습 부분에만 fit합니다. test는 평가에 사용하지 않습니다.
+
+### CELL 2 [markdown] execution=
+# 1. 데이터 수집 및 확인
+
+### CELL 3 [code] execution=
+from pathlib import Path
+import numpy as np
+import pandas as pd
+from IPython.display import display
+from sklearn.model_selection import StratifiedKFold, train_test_split
+from common.utils import train_test_split_by_target, reset_seeds
+from common.modeling import BoostModelType
+from common.evaluations import get_auc_score
+from common.preprocessing import TitanicPreprocessor
+
+# 새 폴더 구조: 루트의 예전 CSV를 사용하지 않습니다.
+train = pd.read_csv("csv/train.csv")
+test = pd.read_csv("csv/test.csv")
+submission = pd.read_csv("csv/submission.csv")
+
+### CELL 4 [code] execution=
+print("train shape:", train.shape)
+display(train.head())
+
+print("test shape:", test.shape)
+display(test.head())
+OUTPUT:
+   passengerid  survived  pclass  ...     fare cabin  embarked
+0            0         0       2  ...  12.8750   NaN         S
+1            1         0       3  ...   7.7500   NaN         Q
+2            2         1       1  ...  93.5000   B69         S
+3            3         1       3  ...   7.7958   NaN         S
+4            4         0       2  ...  26.0000   NaN         S
+
+[5 rows x 12 columns]
+OUTPUT:
+   passengerid  pclass  ... cabin embarked
+0          916       3  ...   NaN        Q
+1          917       2  ...   NaN        S
+2          918       3  ...   NaN        Q
+3          919       3  ...   NaN        S
+4          920       1  ...   NaN        S
+
+[5 rows x 11 columns]
+OUTPUT:
+train shape: (916, 12)
+test shape: (393, 11)
+
+
+### CELL 5 [markdown] execution=
+# 2. 메타 정보 확인
+
+### CELL 6 [code] execution=
+# train 데이터 기본 정보
+print(train.shape)
+print(train.columns.tolist())
+train.info()
+print(train.dtypes)
+print("결측치 개수")
+print(train.isna().sum())
+print("결측치 비율")
+print(train.isna().mean())
+print("고유값 개수")
+print(train.nunique())
+display(train.describe(include="all"))
+OUTPUT:
+        passengerid    survived  ...            cabin embarked
+count    916.000000  916.000000  ...              198      915
+unique          NaN         NaN  ...              146        3
+top             NaN         NaN  ...  B57 B59 B63 B66        S
+freq            NaN         NaN  ...                4      645
+mean     457.500000    0.377729  ...              NaN      NaN
+std      264.570721    0.485084  ...              NaN      NaN
+min        0.000000    0.000000  ...              NaN      NaN
+25%      228.750000    0.000000  ...              NaN      NaN
+50%      457.500000    0.000000  ...              NaN      NaN
+75%      686.250000    1.000000  ...              NaN      NaN
+max      915.000000    1.000000  ...              NaN      NaN
+
+[11 rows x 12 columns]
+OUTPUT:
+(916, 12)
+['passengerid', 'survived', 'pclass', 'name', 'gender', 'age', 'sibsp', 'parch', 'ticket', 'fare', 'cabin', 'embarked']
+<class 'pandas.DataFrame'>
+RangeIndex: 916 entries, 0 to 915
+Data columns (total 12 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   passengerid  916 non-null    int64  
+ 1   survived     916 non-null    int64  
+ 2   pclass       916 non-null    int64  
+ 3   name         916 non-null    str    
+ 4   gender       916 non-null    str    
+ 5   age          736 non-null    float64
+ 6   sibsp        916 non-null    int64  
+ 7   parch        916 non-null    int64  
+ 8   ticket       916 non-null    str    
+ 9   fare         916 non-null    float64
+ 10  cabin        198 non-null    str    
+ 11  embarked     915 non-null    str    
+dtypes: float64(2), int64(5), str(5)
+memory usage: 86.0 KB
+passengerid      int64
+survived         int64
+pclass           int64
+name               str
+gender             str
+age            float64
+sibsp            int64
+parch            int64
+ticket             str
+fare           float64
+cabin              str
+embarked           str
+dtype: object
+결측치 개수
+passengerid      0
+survived         0
+pclass           0
+name             0
+gender           0
+age            180
+sibsp            0
+parch            0
+ticket           0
+fare             0
+cabin          718
+embarked         1
+dtype: int64
+결측치 비율
+passengerid    0.000000
+survived       0.000000
+pclass         0.000000
+name           0.000000
+gender         0.000000
+age            0.196507
+sibsp          0.000000
+parch          0.000000
+ticket         0.000000
+fare           0.000000
+cabin          0.783843
+embarked       0.001092
+dtype: float64
+고유값 개수
+passengerid    916
+survived         2
+pclass           3
+name           915
+gender           2
+age             92
+sibsp            7
+parch            8
+ticket         703
+fare           251
+cabin          146
+embarked         3
+dtype: int64
+
+
+### CELL 7 [code] execution=
+# test 데이터 기본 정보
+print(test.shape)
+print(test.columns.tolist())
+test.info()
+print(test.dtypes)
+print("결측치 개수")
+print(test.isna().sum())
+print("결측치 비율")
+print(test.isna().mean())
+print("고유값 개수")
+print(test.nunique())
+display(test.describe(include="all"))
+OUTPUT:
+        passengerid      pclass  ... cabin embarked
+count    393.000000  393.000000  ...    97      392
+unique          NaN         NaN  ...    86        3
+top             NaN         NaN  ...    F4        S
+freq            NaN         NaN  ...     4      269
+mean    1112.000000    2.300254  ...   NaN      NaN
+std      113.593574    0.836919  ...   NaN      NaN
+min      916.000000    1.000000  ...   NaN      NaN
+25%     1014.000000    2.000000  ...   NaN      NaN
+50%     1112.000000    3.000000  ...   NaN      NaN
+75%     1210.000000    3.000000  ...   NaN      NaN
+max     1308.000000    3.000000  ...   NaN      NaN
+
+[11 rows x 11 columns]
+OUTPUT:
+(393, 11)
+['passengerid', 'pclass', 'name', 'gender', 'age', 'sibsp', 'parch', 'ticket', 'fare', 'cabin', 'embarked']
+<class 'pandas.DataFrame'>
+RangeIndex: 393 entries, 0 to 392
+Data columns (total 11 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   passengerid  393 non-null    int64  
+ 1   pclass       393 non-null    int64  
+ 2   name         393 non-null    str    
+ 3   gender       393 non-null    str    
+ 4   age          310 non-null    float64
+ 5   sibsp        393 non-null    int64  
+ 6   parch        393 non-null    int64  
+ 7   ticket       393 non-null    str    
+ 8   fare         392 non-null    float64
+ 9   cabin        97 non-null     str    
+ 10  embarked     392 non-null    str    
+dtypes: float64(2), int64(4), str(5)
+memory usage: 33.9 KB
+passengerid      int64
+pclass           int64
+name               str
+gender             str
+age            float64
+sibsp            int64
+parch            int64
+ticket             str
+fare           float64
+cabin              str
+embarked           str
+dtype: object
+결측치 개수
+passengerid      0
+pclass           0
+name             0
+gender           0
+age             83
+sibsp            0
+parch            0
+ticket           0
+fare             1
+cabin          296
+embarked         1
+dtype: int64
+결측치 비율
+passengerid    0.000000
+pclass         0.000000
+name           0.000000
+gender         0.000000
+age            0.211196
+sibsp          0.000000
+parch          0.000000
+ticket         0.000000
+fare           0.002545
+cabin          0.753181
+embarked       0.002545
+dtype: float64
+고유값 개수
+passengerid    393
+pclass           3
+name           393
+gender           2
+age             75
+sibsp            7
+parch            7
+ticket         345
+fare           168
+cabin           86
+embarked         3
+dtype: int64
+
+
+### CELL 8 [code] execution=
+print("train 컬럼")
+print(train.columns.tolist())
+print("test 컬럼")
+print(test.columns.tolist())
+train_only = set(train.columns) - set(test.columns)
+test_only = set(test.columns) - set(train.columns)
+print("train에만 있는 컬럼:", train_only)
+print("test에만 있는 컬럼:", test_only)
+OUTPUT:
+train 컬럼
+['passengerid', 'survived', 'pclass', 'name', 'gender', 'age', 'sibsp', 'parch', 'ticket', 'fare', 'cabin', 'embarked']
+test 컬럼
+['passengerid', 'pclass', 'name', 'gender', 'age', 'sibsp', 'parch', 'ticket', 'fare', 'cabin', 'embarked']
+train에만 있는 컬럼: {'survived'}
+test에만 있는 컬럼: set()
+
+
+### CELL 9 [markdown] execution=
+# 3. Target 정의
+train에만 있는 실제 컬럼과 제출 템플릿을 교차 확인 !
+passengerid : 행 식별자이므로 피처에서 제외
+test.csv : target 없는 거 정상
+
+### CELL 10 [code] execution=
+assert len(train_only) == 1 and not test_only # 컬럼 차이 검증
+
+assert train_only == {"survived"}
+target_col = "survived"
+assert target_col in submission.columns
+id_col = "passengerid"
+assert id_col in submission.columns and id_col in test.columns
+assert train[id_col].is_unique and test[id_col].is_unique
+assert train[id_col].notna().all() and test[id_col].notna().all()
+assert set(train[id_col]).isdisjoint(test[id_col])
+
+X = train.drop(columns=[target_col, id_col])
+y = train[target_col]
+X_test_raw = test.drop(columns=id_col)
+assert X.columns.equals(X_test_raw.columns)
+assert y.notna().all()
+print('target:', target_col, 'ID:', id_col, 'X/y:', X.shape, y.shape)
+OUTPUT:
+target: survived ID: passengerid X/y: (916, 10) (916,)
+
+
+### CELL 11 [markdown] execution=
+# 4. Target 데이터 분석
+survived : 저장 dtype은 정수형, 의미는 생존 여부를 나타내는 범주형 target
+
+그래서 이진 분류 - stratify 사용
+
+
+EDA와 전처리보다 먼저 학습/validation을 분리 !!
+
+공통 split 함수는 seed 42, stratify, 기본 validation 25%를 사용
+
+### CELL 12 [code] execution=
+assert set(y.unique()) == {0, 1}
+print('target dtype:', y.dtype, '문제 유형: 이진 분류')
+print(pd.DataFrame({'count': y.value_counts(), 'ratio': y.value_counts(normalize=True)}))
+train_part, valid_part = train_test_split_by_target(train, target_name=target_col)
+X_tr_raw = train_part.drop(columns=[id_col, target_col])
+y_tr = train_part[target_col]
+X_valid_raw = valid_part.drop(columns=[id_col, target_col])
+y_valid = valid_part[target_col]
+assert set(train_part[id_col]).isdisjoint(valid_part[id_col])
+print('학습/validation:', X_tr_raw.shape, X_valid_raw.shape)
+print('validation 비율:', y_valid.value_counts(normalize=True).to_dict())
+OUTPUT:
+target dtype: int64 문제 유형: 이진 분류
+          count     ratio
+survived                 
+0           570  0.622271
+1           346  0.377729
+학습/validation: (687, 10) (229, 10)
+validation 비율: {0: 0.6244541484716157, 1: 0.37554585152838427}
+
+
+### CELL 13 [markdown] execution=
+# 5. 핵심 EDA 확인
+상세 그래프와 변수 조합 분석 ㅣ my_folder/titanic_eda.ipynb에서 확인 ㄱㄱ
+학습 부분에서는 여성 생존율 85.4%, 남성 12.3%, 1등급 53.3%, 3등급 29.8%로 차이 존재
+성별·등급은 유지하고 가족 규모를 피처로 사용
+ 원본 수치형 사이 절대 상관 0.8 이상인 쌍은 없음
+이번에는 cabin 정보 존재 여부와 age 누락 여부를 추가 확인합니다.
+
+### CELL 14 [code] execution=
+display(train_part.groupby("gender")[target_col].agg(["size", "mean"]))
+display(train_part.groupby("pclass")[target_col].agg(["size", "mean"]))
+# 가설 근거는 학습 부분에서만 확인합니다.
+eda = train_part.copy()
+eda['HasCabin'] = eda['cabin'].notna().astype(int)
+eda['AgeMissing'] = eda['age'].isna().astype(int)
+display(eda.groupby('HasCabin')[target_col].agg(['size', 'mean']))
+display(eda.groupby('AgeMissing')[target_col].agg(['size', 'mean']))
+display(eda.groupby(['pclass', 'HasCabin'])[target_col].agg(['size', 'mean']))
+OUTPUT:
+        size      mean
+gender                
+female   240  0.854167
+male     447  0.123043
+OUTPUT:
+        size      mean
+pclass                
+1        165  0.533333
+2        159  0.402516
+3        363  0.297521
+OUTPUT:
+          size      mean
+HasCabin                
+0          543  0.327808
+1          144  0.569444
+OUTPUT:
+            size      mean
+AgeMissing                
+0            561  0.386809
+1            126  0.341270
+OUTPUT:
+                 size      mean
+pclass HasCabin                
+1      0           41  0.390244
+       1          124  0.580645
+2      0          147  0.394558
+       1           12  0.500000
+3      0          355  0.292958
+       1            8  0.500000
+
+### CELL 15 [markdown] execution=
+# 6. 데이터 전처리
+## 6-1. 결측치
+cabin :  20%를 크게 넘어 원본 객실번호를 제외하자
+age : 생존과 연관될 수 있는 기본 변수이므로 유지하고 성별·등급별 중앙값으로 치환
+그룹 통계가 없으면 학습 전체 중앙값을 씀
+나머지 수치형은 중앙값, 범주형은 최빈값
+validation/test에는 transform만 꼭 해야 해
+최종 재학습 때는 전체 train에서 새 전처리 객체를 fit ! 
+
+학습 부분 cabin 결측은 543/687행(79.0%)입니다. 
+알려진 개별 객실번호도 표본이 작은 그룹이 많아 원본 번호는 첫 baseline에서 제외  . . 객실 정보가 무의미하다고 단정하는 것은 아님
+
+### CELL 16 [code] execution=
+# Baseline 처리 흐름을 그대로 확인합니다.
+# 실험용 클래스는 원본 마스크 하나만 추가하고 나머지는 상속해 재사용합니다.
+class ExperimentPreprocessor(TitanicPreprocessor):
+    def __init__(self, variant='Baseline'):
+        self.variant = variant
+
+    def transform_missing(self, X):
+        # 원본 X는 변경하지 않으므로 삭제/치환 이전 결측 여부를 읽을 수 있습니다.
+        data = super().transform_missing(X)
+        if self.variant == 'HasCabin':
+            data['HasCabin'] = X['cabin'].notna().astype(int)
+        elif self.variant == 'AgeMissing':
+            data['AgeMissing'] = X['age'].isna().astype(int)
+        elif self.variant != 'Baseline':
+            raise ValueError('알 수 없는 실험 이름입니다.')
+        return data
+
+prep = ExperimentPreprocessor('Baseline').fit_missing(X_tr_raw)
+X_tr_clean = prep.transform_missing(X_tr_raw)
+X_valid_clean = prep.transform_missing(X_valid_raw)
+print('학습 결측 비율:', prep.missing_ratio_.to_dict())
+print('나이 그룹 중앙값:', prep.age_groups_.to_dict())
+assert not X_tr_clean.isna().any().any()
+assert not X_valid_clean.isna().any().any()
+OUTPUT:
+학습 결측 비율: {'pclass': 0.0, 'name': 0.0, 'gender': 0.0, 'age': 0.18340611353711792, 'sibsp': 0.0, 'parch': 0.0, 'ticket': 0.0, 'fare': 0.0, 'cabin': 0.7903930131004366, 'embarked': 0.0}
+나이 그룹 중앙값: {('female', 1): 35.0, ('female', 2): 27.0, ('female', 3): 22.0, ('male', 1): 42.0, ('male', 2): 30.0, ('male', 3): 24.0}
+
+
+### CELL 17 [markdown] execution=
+## 6-2. Feature 생성
+Baseline: FamilySize, IsAlone 유지. 실험 1: HasCabin만 추가. 실험 2: AgeMissing만 추가.
+마스크는 원본 X에서 계산하며, 나머지 가족 피처 생성 코드는 그대로 재사용합니다.
+
+### CELL 18 [code] execution=
+X_tr_features = prep.make_features(X_tr_clean)
+X_valid_features = prep.make_features(X_valid_clean)
+print(X_tr_features[['sibsp', 'parch', 'FamilySize', 'IsAlone']].head().to_string())
+OUTPUT:
+     sibsp  parch  FamilySize  IsAlone
+595      0      1           2        0
+148      0      0           1        1
+347      1      1           3        0
+731      0      2           3        0
+457      0      0           1        1
+
+
+### CELL 19 [markdown] execution=
+## 6-3. 중복 제거
+기존 코드의 `family_size`와 `FamilySize`는 같은 식이므로 `FamilySize`만 생성합니다.
+이름/티켓 원문은 고유값이 많아 단순 baseline의 원핫 차원을 늘리므로 제외합니다.
+완전 중복과 ID 제외 중복을 점검합니다. 전처리 후 같은 피처를 가진 서로 다른 승객은 중복 관측으로 단정하지 않고 유지합니다.
+원본 완전 중복이 발견되면 분리 전에 처리해야 하므로 실행을 중단해 검토하게 합니다.
+
+### CELL 20 [code] execution=
+raw_duplicates = train.duplicated().sum()
+identity_free_duplicates = train.drop(columns=id_col).duplicated().sum()
+print('원본 완전 중복:', raw_duplicates, 'ID 제외 중복:', identity_free_duplicates)
+assert raw_duplicates == 0 and identity_free_duplicates == 0, '원본 중복을 검토한 뒤 split을 다시 수행하세요.'
+X_tr_features = prep.select_features(X_tr_features)
+X_valid_features = prep.select_features(X_valid_features)
+print('피처가 같은 별도 승객 수(유지):', X_tr_features.duplicated().sum())
+print('사용 피처:', X_tr_features.columns.tolist())
+OUTPUT:
+원본 완전 중복: 0 ID 제외 중복: 0
+피처가 같은 별도 승객 수(유지): 80
+사용 피처: ['pclass', 'gender', 'age', 'sibsp', 'parch', 'fare', 'embarked', 'FamilySize', 'IsAlone']
+
+
+### CELL 21 [markdown] execution=
+## 6-4. Encoding
+Baseline과 같은 gender/embarked 원핫 인코딩입니다. 추가 마스크는 숫자 0/1이므로 인코딩하지 않습니다. 각 실험의 학습 부분에만 encoder를 fit합니다.
+
+### CELL 22 [code] execution=
+prep.fit_encoding(X_tr_features)
+X_tr_encoded = prep.transform_encoding(X_tr_features)
+X_valid_encoded = prep.transform_encoding(X_valid_features)
+print('범주형:', prep.cat_cols_, '인코딩 후:', X_tr_encoded.shape, X_valid_encoded.shape)
+assert X_tr_encoded.columns.equals(X_valid_encoded.columns)
+OUTPUT:
+범주형: ['gender', 'embarked'] 인코딩 후: (687, 12) (229, 12)
+
+
+### CELL 23 [markdown] execution=
+## 6-5. 데이터 스케일링
+기존 모듈의 XGBoost, LightGBM, CatBoost는 모두 트리 기반이므로 스케일링은 생략합니다.
+
+### CELL 24 [code] execution=
+X_tr_model = X_tr_encoded
+X_valid_model = X_valid_encoded
+assert np.isfinite(X_tr_model.to_numpy()).all()
+assert np.isfinite(X_valid_model.to_numpy()).all()
+assert X_tr_model.index.equals(y_tr.index)
+
+### CELL 25 [markdown] execution=
+# 7. 모델 학습
+CatBoost만 비교합니다. 동일한 설정으로 feature 하나씩 변경합니다.
+
+### CELL 26 [code] execution=
+# 기존 common의 CatBoost 클래스/기본 파라미터를 재사용합니다.
+# Modeling은 세 모델을 일괄 학습하므로 이번 CatBoost 단독 비교에는 Enum을 사용합니다.
+cat_class = BoostModelType.cat.value[1]
+cat_params = dict(BoostModelType.cat.value[2])
+cat_params.update(random_state=42, cat_features=[], allow_writing_files=False)
+print('공통 CatBoost 설정:', cat_params)
+
+# 공통 split과 명시적 sklearn split이 같은 행을 만드는지 확인합니다.
+check_train, check_valid = train_test_split(train, test_size=0.25, random_state=42, stratify=y)
+assert train_part.index.equals(check_train.index)
+assert valid_part.index.equals(check_valid.index)
+
+@reset_seeds()
+def train_experiment(variant, train_X, train_y, valid_X):
+    processor = ExperimentPreprocessor(variant)
+    encoded_train = processor.fit_transform(train_X)
+    encoded_valid = processor.transform(valid_X)
+    assert encoded_train.columns.equals(encoded_valid.columns)
+    assert encoded_train.index.equals(train_y.index)
+    model = cat_class(**cat_params)
+    model.fit(encoded_train, train_y.astype('int8'))
+    return processor, model, encoded_train, encoded_valid
+
+runs = {}
+for variant in ['Baseline', 'HasCabin', 'AgeMissing']:
+    runs[variant] = train_experiment(variant, X_tr_raw, y_tr, X_valid_raw)
+    print(variant, '학습 완료')
+OUTPUT:
+공통 CatBoost 설정: {'verbose': 0, 'random_state': 42, 'cat_features': [], 'allow_writing_files': False}
+Baseline 학습 완료
+HasCabin 학습 완료
+AgeMissing 학습 완료
+
+
+### CELL 27 [markdown] execution=
+# 8. Evaluation
+Train/validation AUC와 Gap을 확률로 계산합니다. Holdout은 baseline과 동일합니다.
+
+### CELL 28 [code] execution=
+rows = []
+for variant, run in runs.items():
+    processor, model, encoded_train, encoded_valid = run
+    positive_index = list(model.classes_).index(1)
+    train_auc = get_auc_score(y_tr, model.predict_proba(encoded_train)[:, positive_index])
+    valid_auc = get_auc_score(y_valid, model.predict_proba(encoded_valid)[:, positive_index])
+    rows.append({'experiment': variant, 'train_auc': train_auc, 'validation_auc': valid_auc,
+                 'gap': train_auc - valid_auc})
+results = pd.DataFrame(rows).set_index('experiment')
+baseline_auc = results.loc['Baseline', 'validation_auc']
+baseline_gap = results.loc['Baseline', 'gap']
+results['delta'] = results['validation_auc'] - baseline_auc
+# 반올림된 기존 점수와 재현 점수를 대조합니다.
+assert abs(baseline_auc - 0.900065) < 0.000001
+assert abs(results.loc['Baseline', 'train_auc'] - 0.963079) < 0.000001
+display(results)
+print(results.to_string())
+eligible = results.drop(index='Baseline')
+eligible = eligible[(eligible['validation_auc'] > baseline_auc) & (eligible['gap'] <= baseline_gap + 0.01)]
+candidate = 'Baseline' if eligible.empty else eligible['validation_auc'].idxmax()
+print('5-fold 검토 후보:', candidate)
+OUTPUT:
+            train_auc  validation_auc       gap     delta
+experiment                                               
+Baseline     0.963079        0.900065  0.063014  0.000000
+HasCabin     0.964623        0.898439  0.066185 -0.001626
+AgeMissing   0.964178        0.899943  0.064235 -0.000122
+OUTPUT:
+            train_auc  validation_auc       gap     delta
+experiment                                               
+Baseline     0.963079        0.900065  0.063014  0.000000
+HasCabin     0.964623        0.898439  0.066185 -0.001626
+AgeMissing   0.964178        0.899943  0.064235 -0.000122
+5-fold 검토 후보: Baseline
+
+
+### CELL 29 [markdown] execution=
+## 8-1. Stratified 5-Fold 보조 검증
+후보와 baseline을 같은 fold로 비교합니다. 각 fold에서 전처리와 모델을 새로 학습합니다. 후보를 선택한 데이터도 CV에 포함되므로 독립적인 최종 평가가 아닙니다.
+
+### CELL 30 [code] execution=
+# 동일한 5개 분할에서 baseline과 후보를 비교합니다.
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+cv_variants = ['Baseline']
+if candidate != 'Baseline':
+    cv_variants.append(candidate)
+cv_rows = []
+for fold, (train_index, valid_index) in enumerate(cv.split(X, y), start=1):
+    for variant in cv_variants:
+        processor, model, fold_train, fold_valid = train_experiment(
+            variant, X.iloc[train_index], y.iloc[train_index], X.iloc[valid_index])
+        positive_index = list(model.classes_).index(1)
+        score = get_auc_score(y.iloc[valid_index], model.predict_proba(fold_valid)[:, positive_index])
+        cv_rows.append({'fold': fold, 'experiment': variant, 'auc': score})
+        print('Fold', fold, variant, 'AUC:', score)
+cv_results = pd.DataFrame(cv_rows)
+cv_summary = cv_results.groupby('experiment')['auc'].agg(['mean', 'std'])
+# std는 pandas 기본 표본 표준편차(ddof=1)입니다.
+display(cv_results.pivot(index='fold', columns='experiment', values='auc'))
+display(cv_summary)
+print(cv_summary.to_string())
+selected_variant = candidate
+if candidate != 'Baseline' and cv_summary.loc[candidate, 'mean'] < cv_summary.loc['Baseline', 'mean']:
+    selected_variant = 'Baseline'
+print('최종 채택:', selected_variant)
+results['decision'] = '최종 제외'
+results.loc['Baseline', 'decision'] = '비교 기준'
+results.loc[selected_variant, 'decision'] = '최종 채택'
+display(results)
+OUTPUT:
+experiment  Baseline
+fold                
+1           0.891917
+2           0.919082
+3           0.878782
+4           0.906433
+5           0.912662
+OUTPUT:
+                mean       std
+experiment                    
+Baseline    0.901775  0.016322
+OUTPUT:
+            train_auc  validation_auc       gap     delta decision
+experiment                                                        
+Baseline     0.963079        0.900065  0.063014  0.000000    최종 채택
+HasCabin     0.964623        0.898439  0.066185 -0.001626    최종 제외
+AgeMissing   0.964178        0.899943  0.064235 -0.000122    최종 제외
+OUTPUT:
+Fold 1 Baseline AUC: 0.8919172932330827
+Fold 2 Baseline AUC: 0.9190821256038647
+Fold 3 Baseline AUC: 0.8787821001779812
+Fold 4 Baseline AUC: 0.9064327485380117
+Fold 5 Baseline AUC: 0.9126620900076278
+                mean       std
+experiment                    
+Baseline    0.901775  0.016322
+최종 채택: Baseline
+
+
+### CELL 31 [markdown] execution=
+# 9. 전체 train 데이터로 최종 학습
+Holdout/CV 기준을 통과한 설정만 전체 train에 새로 fit합니다.
+
+### CELL 32 [code] execution=
+final_prep = ExperimentPreprocessor(selected_variant)
+X_full_model = final_prep.fit_transform(X)
+final_model = cat_class(**cat_params)
+final_model.fit(X_full_model, y.astype('int8'))
+print('최종 모델:', selected_variant)
+print('최종 feature:', X_full_model.columns.tolist())
+print('전체 train:', X_full_model.shape)
+print('실제 최종 CatBoost 설정:', final_model.get_all_params())
+OUTPUT:
+최종 모델: Baseline
+최종 feature: ['pclass', 'age', 'sibsp', 'parch', 'fare', 'FamilySize', 'IsAlone', 'gender_female', 'gender_male', 'embarked_C', 'embarked_Q', 'embarked_S']
+전체 train: (916, 12)
+실제 최종 CatBoost 설정: {'nan_mode': 'Min', 'eval_metric': 'Logloss', 'iterations': 1000, 'sampling_frequency': 'PerTree', 'leaf_estimation_method': 'Newton', 'random_score_type': 'NormalWithModelSizeDecrease', 'grow_policy': 'SymmetricTree', 'penalties_coefficient': 1, 'boosting_type': 'Plain', 'model_shrink_mode': 'Constant', 'feature_border_type': 'GreedyLogSum', 'bayesian_matrix_reg': 0.10000000149011612, 'eval_fraction': 0, 'force_unit_auto_pair_weights': False, 'l2_leaf_reg': 3, 'random_strength': 1, 'rsm': 1, 'boost_from_average': False, 'model_size_reg': 0.5, 'pool_metainfo_options': {'tags': {}}, 'subsample': 0.800000011920929, 'use_best_model': False, 'class_names': [0, 1], 'random_seed': 42, 'depth': 6, 'posterior_sampling': False, 'border_count': 254, 'classes_count': 0, 'auto_class_weights': 'None', 'sparse_features_conflict_fraction': 0, 'leaf_estimation_backtracking': 'AnyImprovement', 'best_model_min_trees': 1, 'model_shrink_rate': 0, 'min_data_in_leaf': 1, 'loss_function': 'Logloss', 'learning_rate': 0.009922999888658524, 'score_function': 'Cosine', 'task_type': 'CPU', 'leaf_estimation_iterations': 10, 'bootstrap_type': 'MVS', 'max_leaves': 64}
+
+
+### CELL 33 [markdown] execution=
+# 10. test 예측
+먼저 원본 submission 템플릿의 컬럼/ID/행 순서를 확인합니다.
+사용자가 명시한 평가 기준 AUC와 템플릿의 실수형 0.5를 근거로 생존 확률을 제출합니다.
+양성 클래스의 위치는 classes_에서 확인합니다. test 정답을 만들거나 성능 평가에 사용하지 않습니다.
+
+### CELL 34 [code] execution=
+print('submission:', submission.shape, submission.columns.tolist())
+print(submission.head().to_string(index=False))
+assert submission.columns.tolist() == [id_col, target_col]
+assert len(submission) == len(test)
+assert submission[id_col].is_unique and submission[id_col].notna().all()
+assert set(submission[id_col]) == set(test[id_col])
+print('ID:', id_col, 'prediction:', target_col)
+print('test와 ID 순서 일치:', submission[id_col].equals(test[id_col]))
+assert pd.api.types.is_float_dtype(submission[target_col])
+assert submission[target_col].between(0, 1).all()
+X_test_model = final_prep.transform(X_test_raw)
+assert X_full_model.columns.equals(X_test_model.columns)
+positive_index = list(final_model.classes_).index(1)
+predictions = final_model.predict_proba(X_test_model)[:, positive_index]
+assert np.isfinite(predictions).all() and ((predictions >= 0) & (predictions <= 1)).all()
+OUTPUT:
+submission: (393, 2) ['passengerid', 'survived']
+ passengerid  survived
+         916       0.5
+         917       0.5
+         918       0.5
+         919       0.5
+         920       0.5
+ID: passengerid prediction: survived
+test와 ID 순서 일치: True
+
+
+### CELL 35 [markdown] execution=
+# 11. Submission
+submission/titanic_result_2.csv에 확률을 저장합니다. 기존 제출 파일을 덮어쓰지 않습니다.
+
+### CELL 36 [code] execution=
+result = submission.copy(deep=True)
+by_id = pd.Series(predictions, index=test[id_col].to_numpy())
+result[target_col] = result[id_col].map(by_id)
+assert result[target_col].notna().all()
+Path('submission').mkdir(exist_ok=True)
+result.to_csv('submission/titanic_result_2.csv', index=False)
+saved = pd.read_csv('submission/titanic_result_2.csv')
+checks = {
+    '파일 존재': Path('submission/titanic_result_2.csv').is_file(),
+    'test 행수 일치': len(saved) == len(test),
+    '템플릿 shape 유지': saved.shape == submission.shape,
+    '컬럼 순서 유지': saved.columns.equals(submission.columns),
+    'ID 및 행 순서 유지': saved[id_col].equals(submission[id_col]),
+    'NaN 없음': saved[target_col].notna().all(),
+    '실수형 확률': pd.api.types.is_float_dtype(saved[target_col]),
+    '확률 범위': saved[target_col].between(0, 1).all(),
+}
+assert all(checks.values()), checks
+pd.testing.assert_frame_equal(saved.drop(columns=target_col), submission.drop(columns=target_col))
+np.testing.assert_allclose(saved[target_col], by_id.loc[submission[id_col]], atol=1e-15, rtol=1e-12)
+print('검증:', checks)
+print('최종 shape:', saved.shape)
+display(saved.head())
+OUTPUT:
+   passengerid  survived
+0          916  0.832588
+1          917  0.906221
+2          918  0.879633
+3          919  0.075956
+4          920  0.962691
+OUTPUT:
+검증: {'파일 존재': True, 'test 행수 일치': True, '템플릿 shape 유지': True, '컬럼 순서 유지': True, 'ID 및 행 순서 유지': True, 'NaN 없음': np.True_, '실수형 확률': True, '확률 범위': np.True_}
+최종 shape: (393, 2)
+
+
+### CELL 37 [markdown] execution=
+# 2차 실험 결과
+
+## Baseline
+CatBoost holdout Validation AUC 0.900065를 동일한 split/파라미터로 재현했습니다.
+실제 기존 파일명은 submission/submission_result_1.csv입니다. titanic_1.ipynb 및 common 모듈은 수정하지 않았습니다.
+
+## 가설과 실험 결과
+| 실험 | 변경 | Train AUC | Validation AUC | Gap | Baseline 대비 | 판단 |
+|---|---|---:|---:|---:|---:|---|
+| Baseline | 기존 12개 피처 | 0.963079 | 0.900065 | 0.063014 | +0.000000 | 유지 |
+| HasCabin | 객실 정보 존재 여부 추가 | 0.964623 | 0.898439 | 0.066185 | -0.001626 | 최종 제외 |
+| AgeMissing | 나이 누락 여부 추가 | 0.964178 | 0.899943 | 0.064235 | -0.000122 | 최종 제외 |
+
+**가설 1: HasCabin.** 높은 결측률로 삭제한 cabin의 존재 여부가 추가 정보를 줄 것으로 가정했습니다. Train AUC는 상승했지만 validation은 하락하고 Gap도 증가하여 제외했습니다. 객실 정보가 무의미하다는 증명은 아닙니다.
+
+**가설 2: AgeMissing.** 중앙값 치환 전 누락 여부를 보존하면 도움이 될 것으로 가정했습니다. Validation AUC가 소폭 하락해 제외했습니다. 약 0.000122 차이는 매우 작으므로 열등성이 확실하다고 해석하지 않습니다.
+
+HasCabin과 AgeMissing을 함께 넣거나 다른 피처/하이퍼파라미터와 조합하는 실험은 하지 않았습니다. 성별×등급, IsAlone 제거도 이번에는 미실행입니다.
+
+## 최종 2차 모델
+- 이번에 채택한 추가/제거 Feature: 없음. Baseline을 유지합니다.
+- 원본 학습 제외: passengerid, cabin, name, ticket. survived는 y로 분리합니다.
+- 기존 파생변수 FamilySize, IsAlone 및 gender/embarked 원핫 인코딩 유지.
+- 최종 12개 피처: pclass, age, sibsp, parch, fare, FamilySize, IsAlone, gender_female, gender_male, embarked_C, embarked_Q, embarked_S.
+- Train AUC 0.963079 / holdout Validation AUC 0.900065 / Gap 0.063014.
+- Baseline 대비 holdout 변화: 0.000000. 이번 실험에서 개선된 설정은 찾지 못했습니다.
+- 명시적 설정: random_state=42, verbose=0, cat_features=[], allow_writing_files=False. 나머지는 baseline과 같은 CatBoost 기본값입니다.
+- 최종 전체 train 학습에서 확인한 값: iterations=1000, depth=6, l2_leaf_reg=3, learning_rate≈0.009923. learning_rate는 기본 자동 결정값이므로 fold의 학습 행 수에 따라 다를 수 있습니다.
+
+## 5-fold 보조 검증
+Holdout에서 통과한 새 피처가 없어 최종 후보인 Baseline만 CV를 수행했습니다. 탈락한 피처들의 CV는 수행하지 않았으므로 CV로 피처의 효과를 비교했다고 해석하면 안 됩니다.
+
+| Fold | AUC |
+|---|---:|
+| 1 | 0.891917 |
+| 2 | 0.919082 |
+| 3 | 0.878782 |
+| 4 | 0.906433 |
+| 5 | 0.912662 |
+
+평균 AUC **0.901775**, 표본 표준편차(ddof=1) **0.016322**. 각 fold에서 학습 부분에만 전처리를 fit했습니다.
+
+## 2차 Submission
+submission/titanic_result_2.csv — shape (393, 2), passengerid와 survived.
+생존 확률 float64, 0~1 범위, NaN 없음, 원본 템플릿의 컬럼/순서/ID/행 순서 유지, index=False 저장을 검증했습니다.
+최종 설정이 baseline과 같으므로 기존 제출과 같은 예측 결과가 나올 수 있으며, 새로운 피처를 채택한 개선 제출은 아닙니다.
+
+## 다음 3차 실험 방향 (코드 미작성)
+| 우선순위 | 다음 가설 | 근거 | 변경 한 가지 | 확인할 결과 |
+|---|---|---|---|---|
+| 1 | 모델 복잡도 감소가 일반화에 도움 | 두 추가 피처 모두 Train만 상승하고 Gap 증가 | 피처 고정, CatBoost depth 6→5 | Validation 유지/상승과 Gap 감소 여부 |
+| 2 | 명시적인 성별×등급 표현이 도움 | 기존 EDA에서 성별·등급별 생존율 차이 | gender+pclass 조합 하나만 추가 | 동일 holdout AUC 개선 여부. 트리가 이미 학습할 수 있어 효과는 불확실 |
+| 3 | IsAlone의 추가 표현이 불필요 | FamilySize==1의 결정적 함수 | IsAlone만 제거 | 피처 감소 후 AUC 유지/개선 여부 |
+| 4 | 가족 규모의 작은 범주를 묶으면 안정화 | EDA 대가족 범주의 표본이 작음 | FamilySize를 사전 정의한 구간 변수로 교체 | CV 평균/변동 및 정보 손실 여부 |
+
+한 번에 하나만 바꾸고 기존 holdout 분할을 유지합니다. 같은 validation으로 여러 후보를 선택하면 낙관성이 생길 수 있어 유망 후보만 baseline과 같은 CV fold로 비교합니다.

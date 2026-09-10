@@ -1,0 +1,51 @@
+{
+  "experiment": "Titanic 16 - CatBoost RandomizedSearchCV",
+  "base_model": "Titanic 15",
+  "feature_changed": false,
+  "features": [
+    "GenderClass",
+    "GenderIsChild",
+    "ClassIsChild",
+    "AgeBand"
+  ],
+  "encoded_feature_count": 33,
+  "n_iter": 30,
+  "scoring": "roc_auc",
+  "best_params": {
+    "border_count": 128,
+    "depth": 4,
+    "iterations": 817,
+    "l2_leaf_reg": 1.9452208847287389,
+    "learning_rate": 0.006971115660907851,
+    "random_strength": 0.3746261155838959,
+    "subsample": 0.9328729111737557
+  },
+  "search_best_score": 0.9104809124259926,
+  "champion_cv_mean": 0.9062745632196434,
+  "tuned_cv_mean": 0.9104809124259926,
+  "champion_cv_std": 0.016867827959369617,
+  "tuned_cv_std": 0.017303866226294,
+  "champion_oof_auc": 0.9042465267214278,
+  "tuned_oof_auc": 0.9077806510495893,
+  "champion_holdout": {
+    "train_auc": 0.965299045217078,
+    "validation_auc": 0.9036428687591479,
+    "gap": 0.06165617645793009
+  },
+  "tuned_holdout": {
+    "train_auc": 0.9529093856962709,
+    "validation_auc": 0.900065051227842,
+    "gap": 0.052844334468428955
+  },
+  "prediction_comparison": {
+    "mean_absolute_prediction_difference": 0.02629324939592306,
+    "max_absolute_prediction_difference": 0.21297402281564404,
+    "pearson_correlation": 0.9943338884426631,
+    "spearman_rank_correlation": 0.9655511918534677,
+    "class_changes_at_0_5": 5
+  },
+  "decision": "채택",
+  "submission_file": "submission\\titanic_result_16_randomized_search.csv",
+  "private_auc": "제출 후 입력",
+  "public_auc": "제출 후 입력"
+}
