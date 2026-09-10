@@ -45,6 +45,8 @@ class FeaturePreprocessor(TitanicPreprocessor):
         if 'AgeBand' in self.additions:
             data['AgeBand'] = pd.cut(data['age'], [0,16,20,35,60,np.inf], right=False,
                                      labels=['Child','Teen','YoungAdult','Adult','Senior']).astype(str)
+            # AgeBand 생성 후 원본 Age 제거
+            data.drop(columns=["age"], inplace=True)
         return self.select_features(data)
 
     def fit_transform(self, X):
