@@ -36,7 +36,7 @@ class TitleFeaturePreprocessor(TitanicPreprocessor):
     """기존 전처리를 유지하고 요청된 이름 기반 피처 하나만 추가한다."""
 
     def __init__(self, feature=None):
-        if feature not in {None, "IsNoble", "ProfessionGroup"}:
+        if feature not in {None, "IsNoble", "ProfessionGroup", "LogFare"}:
             raise ValueError(f"지원하지 않는 피처입니다: {feature}")
         self.feature = feature
 
@@ -47,6 +47,8 @@ class TitleFeaturePreprocessor(TitanicPreprocessor):
             data["IsNoble"] = title.isin(NOBLE_TITLES).astype(int)
         elif self.feature == "ProfessionGroup":
             data["ProfessionGroup"] = title.map(make_profession_group)
+        elif self.feature == "LogFare":
+            data["LogFare"] = np.log1p(clean["fare"])
         # Title은 중간 변수일 뿐이며 select_features가 name 원문을 제거한다.
         return self.select_features(data)
 
