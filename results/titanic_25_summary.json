@@ -1,0 +1,108 @@
+{
+  "experiment": "Titanic 25",
+  "baseline": "Titanic 21",
+  "added_features": [
+    "NonFamilyGroupSize",
+    "TicketFarePerPerson",
+    "NonFamilyGroupRatio"
+  ],
+  "features": [
+    "pclass",
+    "age",
+    "sibsp",
+    "parch",
+    "fare",
+    "FamilySize",
+    "LogFare",
+    "NonFamilyGroupSize",
+    "TicketFarePerPerson",
+    "NonFamilyGroupRatio",
+    "gender_female",
+    "gender_male",
+    "embarked_C",
+    "embarked_Q",
+    "embarked_S"
+  ],
+  "train_auc": 0.9673031886146639,
+  "validation_auc": 0.8967311758009434,
+  "gap": 0.0705720128137205,
+  "cv_mean": 0.8985454578475174,
+  "cv_std": 0.014153940226131659,
+  "fold_scores": [
+    0.8833959899749374,
+    0.9153953724891941,
+    0.8936562420544113,
+    0.8887617594711416,
+    0.9115179252479023
+  ],
+  "vs_titanic_21": {
+    "validation_auc_delta": -0.006748824199056536,
+    "cv_mean_delta": -0.00231654215248267,
+    "gap_delta": 0.009897012813720497
+  },
+  "confusion_matrix": {
+    "tn": 124,
+    "fp": 19,
+    "fn": 18,
+    "tp": 68
+  },
+  "normalized_confusion_matrix": {
+    "tn": 0.8671328671328671,
+    "fp": 0.13286713286713286,
+    "fn": 0.20930232558139536,
+    "tp": 0.7906976744186046
+  },
+  "ticket_feature_importance": {
+    "NonFamilyGroupSize": 1.7004247166425535,
+    "TicketFarePerPerson": 9.722969616122445,
+    "NonFamilyGroupRatio": 2.5083035487735668
+  },
+  "ticket_feature_mean_abs_shap": {
+    "NonFamilyGroupSize": 0.03745645488834241,
+    "TicketFarePerPerson": 0.19970433348279468,
+    "NonFamilyGroupRatio": 0.05743053842660142
+  },
+  "diagnostics": {
+    "holdout_train": {
+      "TicketGroupSize_zero": 0,
+      "NonFamilyGroupSize_negative": 168,
+      "NonFamilyGroupRatio_negative": 168,
+      "NaN": 0,
+      "Inf": 0
+    },
+    "holdout_validation": {
+      "TicketGroupSize_zero": 0,
+      "NonFamilyGroupSize_negative": 96,
+      "NonFamilyGroupRatio_negative": 96,
+      "NaN": 0,
+      "Inf": 0
+    },
+    "full_train": {
+      "TicketGroupSize_zero": 0,
+      "NonFamilyGroupSize_negative": 182,
+      "NonFamilyGroupRatio_negative": 182,
+      "NaN": 0,
+      "Inf": 0
+    },
+    "test": {
+      "TicketGroupSize_zero": 0,
+      "NonFamilyGroupSize_negative": 148,
+      "NonFamilyGroupRatio_negative": 148,
+      "NaN": 0,
+      "Inf": 0
+    }
+  },
+  "submission_file": "submission/titanic_25_result.csv",
+  "submission_checks": {
+    "rows_393": true,
+    "template_shape": true,
+    "column_order": true,
+    "same_id_order": true,
+    "prediction_0_1": true,
+    "no_nan": true,
+    "no_duplicate_id": true
+  },
+  "execution_errors": 0,
+  "synergy_assessment": "일관된 시너지 없음",
+  "decision": "미채택"
+}
